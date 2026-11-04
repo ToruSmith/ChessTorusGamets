@@ -25,6 +25,23 @@ async function settle(match: ComputerMatch) {
 const fast = { minDelayMs: 0 };
 
 describe('ComputerMatch', () => {
+  it('runs a clock when a time control is chosen, and a flag fall ends the game', async () => {
+    let now = 1_000;
+    const match = ComputerMatch.create(
+      engine,
+      { humanColor: 'w', level: 1, timeControl: { initialMs: 60_000, incrementMs: 0 } },
+      { ...fast, now: () => now },
+    );
+    match.play({ from: 'e2', to: 'e4' });
+    await settle(match);
+    assert.equal(match.snapshot.canUndo, false, 'a timed game has no take-backs');
+    assert.equal(match.undo(), false);
+    now += 61_000;
+    match.tick();
+    assert.equal(match.snapshot.result?.reason, 'timeout');
+    assert.equal(match.snapshot.result?.winner, 'b');
+  });
+
   it('replies to the human move with a legal move', async () => {
     const match = ComputerMatch.create(engine, { humanColor: 'w', level: 1 }, fast);
     assert.equal(match.play({ from: 'e2', to: 'e4' }), true);

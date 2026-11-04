@@ -143,7 +143,6 @@ export const zhTW = {
   'computer.thinking': '電腦思考中…',
   'computer.you': '（你）',
   'computer.engine': '（電腦 {n} 級）',
-  'computer.noClock': '對電腦不計時。',
   'action.hint': '提示',
   'action.analyze': '賽後分析',
   'analysis.opening': '開局：{name}（{eco}）',

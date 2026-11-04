@@ -228,7 +228,7 @@ ai/UciEngine ──▶ UciTransport ──▶ Web Worker：engine/stockfish-19-l
   - `levels.ts`：八個難度。低難度靠 Stockfish 的 `Skill Level`，並限制深度與時間。
   - `analysis.ts`：分數轉白方勝率（Lichess 公開的 logistic 曲線），以及依走子方勝率下降判斷好壞手：
     10 點不精確、20 點錯著、30 點大錯；走了引擎首選就是「最佳」。
-- **`ComputerMatch`**：棋步存在一個不計時的 `LocalMatch` 裡，所以勝負與和棋判定與其他模式完全相同。
+- **`ComputerMatch`**：棋步存在一個 `LocalMatch` 裡，所以勝負與和棋判定與其他模式完全相同。
   電腦在輪到它時搜尋；可聲明和棋而且自己不佔優時就聲明。悔棋會退回到玩家的上一個回合。
 - **`AnalysisSession`**：逐一評估每個局面（深度 12），算出每手的判斷與雙方的錯誤統計，並記住引擎首選（畫成箭頭）。
   已經結束的局面（將死、和棋）不問引擎，直接給定勝率。
