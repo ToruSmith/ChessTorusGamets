@@ -10,7 +10,10 @@ import {
 } from '../ai/index.ts';
 import {
   Game,
+  STARTING_FEN,
   checkFen,
+  loadOpeningBook,
+  type Opening,
   type Color,
   type GameResult,
   type Move,
@@ -56,6 +59,8 @@ export interface AnalysisSnapshot {
   readonly progress: number;
   readonly done: boolean;
   readonly summary: Record<Color, MistakeCounts>;
+  /** Opening name for each position (Lichess data), once loaded. */
+  readonly openings: readonly (Opening | null)[];
 }
 
 /** Validate a stored request (e.g. from localStorage). */
@@ -99,6 +104,7 @@ export class AnalysisSession {
       progress: 0,
       done: false,
       summary: { w: emptyCounts(), b: emptyCounts() },
+      openings: positions.map(() => null),
     });
   }
 
@@ -112,6 +118,7 @@ export class AnalysisSession {
 
   /** Analyse every position, first to last, updating the snapshot as results arrive. */
   async start(depth: number = ANALYSIS_DEPTH): Promise<void> {
+    void this.#nameOpenings();
     const { positions, startFen, moves } = this.snapshot;
     const game = new Game(startFen);
     for (let i = 0; i < positions.length; i += 1) {
@@ -125,6 +132,15 @@ export class AnalysisSession {
 
   dispose(): void {
     this.#disposed = true;
+  }
+
+  async #nameOpenings(): Promise<void> {
+    if (this.snapshot.startFen !== STARTING_FEN) return;
+    const book = await loadOpeningBook().catch(() => null);
+    if (!book || this.#disposed) return;
+    const ucis = this.snapshot.moves.map((move) => move.uci);
+    const openings = this.snapshot.positions.map((_, i) => book.name(ucis.slice(0, i)));
+    this.#store.set({ ...this.snapshot, openings });
   }
 
   goTo(index: number): void {

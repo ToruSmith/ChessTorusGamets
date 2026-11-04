@@ -35,6 +35,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     document.documentElement.lang = HTML_LANG[locale];
+    document.title = translate(locale, 'app.documentTitle');
   }, [locale]);
 
   const setLocale = useCallback((next: Locale) => {

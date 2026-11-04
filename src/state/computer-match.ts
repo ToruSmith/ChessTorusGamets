@@ -1,7 +1,14 @@
 // A game against Stockfish. The moves live in a LocalMatch (untimed), so results come
 // from the same replay as every other mode; this class adds the engine's replies.
 import { levelById, type UciEngine } from '../ai/index.ts';
-import type { Color, MoveInput, Square } from '../core/index.ts';
+import {
+  STARTING_FEN,
+  loadOpeningBook,
+  type Color,
+  type MoveInput,
+  type OpeningBook,
+  type Square,
+} from '../core/index.ts';
 import { LocalMatch, type LocalRecord } from './local-match.ts';
 import type { MatchSnapshot } from './snapshot.ts';
 import { WritableStore, type Store } from './store.ts';
@@ -25,7 +32,13 @@ export interface ComputerSnapshot extends MatchSnapshot {
 export interface ComputerOptions {
   /** Minimum time before the computer moves, so its reply does not feel instant. */
   readonly minDelayMs?: number;
+  /** Lichess opening book for varied openings and as a fallback; null disables it. */
+  readonly book?: Promise<OpeningBook> | null;
+  readonly random?: () => number;
 }
+
+/** The computer follows the opening book (when the game started normally) for this many plies. */
+const BOOK_PLIES = 12;
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -35,6 +48,8 @@ export class ComputerMatch {
   readonly #humanColor: Color;
   readonly #level: number;
   readonly #minDelayMs: number;
+  readonly #book: Promise<OpeningBook> | null;
+  readonly #random: () => number;
   readonly #store: WritableStore<ComputerSnapshot>;
   #thinking = false;
   #hint: ComputerSnapshot['hint'] = null;
@@ -54,6 +69,8 @@ export class ComputerMatch {
     this.#humanColor = humanColor;
     this.#level = levelById(level).id;
     this.#minDelayMs = options.minDelayMs ?? 300;
+    this.#book = options.book === undefined ? loadOpeningBook() : options.book;
+    this.#random = options.random ?? Math.random;
     this.#store = new WritableStore(this.#snapshot());
     this.#unsubscribe = local.store.subscribe(() => this.#emit());
   }
@@ -181,30 +198,60 @@ export class ComputerMatch {
     this.#thinking = true;
     this.#emit();
     const level = levelById(this.#level);
-    const [result] = await Promise.all([
-      this.#engine.search({
-        fen: snapshot.fen,
-        depth: level.depth,
-        movetime: level.movetime,
-        skill: level.skill,
-      }),
-      sleep(this.#minDelayMs),
-    ]);
+    const history = snapshot.history.map((move) => move.uci);
+    const bookMoves = await this.#bookMoves(history);
+    let move: string | null = null;
+    let claim = false;
+    if (bookMoves.length > 0 && history.length < BOOK_PLIES) {
+      // Lichess opening book: varied, sound openings.
+      move = this.#pick(bookMoves);
+      await sleep(this.#minDelayMs);
+    } else {
+      try {
+        const [result] = await Promise.all([
+          this.#engine.search({
+            fen: snapshot.fen,
+            depth: level.depth,
+            movetime: level.movetime,
+            skill: level.skill,
+          }),
+          sleep(this.#minDelayMs),
+        ]);
+        const own =
+          result.score?.type === 'cp'
+            ? result.score.value
+            : result.score
+              ? Math.sign(result.score.value) * 10_000
+              : 0;
+        // The computer claims an available draw (FIDE 9.2, 9.3) when it is not better.
+        claim = Boolean(snapshot.drawClaim) && own <= 0;
+        move = result.bestMove;
+      } catch {
+        // Engine unavailable: fall back to the book, then to any legal move.
+        move =
+          bookMoves.length > 0
+            ? this.#pick(bookMoves)
+            : this.#pick(snapshot.legalMoves.map((m) => m.uci));
+      }
+    }
     if (generation !== this.#generation) return;
     this.#thinking = false;
-    const ownScore =
-      result.score?.type === 'cp'
-        ? result.score.value
-        : result.score
-          ? Math.sign(result.score.value) * 10_000
-          : 0;
-    // The computer claims an available draw (FIDE 9.2, 9.3) when it is not better.
-    if (this.#local.snapshot.drawClaim && ownScore <= 0) {
-      this.#local.claimDraw();
-    } else if (result.bestMove) {
-      this.#local.play(result.bestMove);
-    }
+    if (claim) this.#local.claimDraw();
+    else if (move) this.#local.play(move);
     this.#emit();
+  }
+
+  async #bookMoves(history: readonly string[]): Promise<string[]> {
+    if (!this.#book || this.#local.toJSON().startFen !== STARTING_FEN) return [];
+    try {
+      return (await this.#book).continuations(history);
+    } catch {
+      return [];
+    }
+  }
+
+  #pick(moves: readonly string[]): string | null {
+    return moves[Math.floor(this.#random() * moves.length)] ?? null;
   }
 
   #emit(): void {

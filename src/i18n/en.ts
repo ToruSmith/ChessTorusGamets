@@ -2,6 +2,7 @@ import type { Messages } from './zh-TW.ts';
 
 export const en: Messages = {
   'app.title': 'Chess',
+  'app.documentTitle': 'Chess · ChessTorusGamets',
   'app.tagline':
     'Play chess in your browser: local two-player, online, against the computer, and review.',
   'app.languageSwitch': '繁體中文',
@@ -130,6 +131,7 @@ export const en: Messages = {
   'computer.noClock': 'Games against the computer are untimed.',
   'action.hint': 'Hint',
   'action.analyze': 'Analyse game',
+  'analysis.opening': 'Opening: {name} ({eco})',
   'analysis.title': 'Game review',
   'analysis.empty':
     'There is no game to review yet. Finish a game, then choose "Analyse game" on the result.',

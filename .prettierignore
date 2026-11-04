@@ -6,3 +6,5 @@ test-results/
 playwright-report/
 package-lock.json
 LICENSE
+src/core/data/
+src/sw-template.js

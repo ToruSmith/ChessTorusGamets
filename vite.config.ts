@@ -1,4 +1,5 @@
-import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
@@ -44,10 +45,41 @@ function stockfishEngine(): Plugin {
   };
 }
 
+/**
+ * Generate sw.js with every file of this build in its precache list, so the whole app
+ * (including the engine) works offline once installed. See src/sw-template.js.
+ */
+function serviceWorker(): Plugin {
+  return {
+    name: 'service-worker',
+    apply: 'build',
+    generateBundle(_options, bundle) {
+      const publicDir = join(import.meta.dirname, 'public');
+      const publicFiles = readdirSync(publicDir, { recursive: true, withFileTypes: true })
+        .filter((entry) => entry.isFile() && entry.name !== '_headers')
+        .map((entry) =>
+          join(entry.parentPath, entry.name)
+            .slice(publicDir.length + 1)
+            .split('\\')
+            .join('/'),
+        );
+      const files = ['./', ...Object.keys(bundle), ...publicFiles]
+        .filter((file) => file !== 'sw.js' && !file.endsWith('.map'))
+        .sort();
+      const version = createHash('sha256').update(JSON.stringify(files)).digest('hex').slice(0, 12);
+      const template = readFileSync(join(import.meta.dirname, 'src', 'sw-template.js'), 'utf8');
+      const source = template
+        .replace('__VERSION__', version)
+        .replace('__PRECACHE__', JSON.stringify(files));
+      this.emitFile({ type: 'asset', fileName: 'sw.js', source });
+    },
+  };
+}
+
 // Relative base so the build works on Cloudflare Pages, preview URLs and sub-paths.
 export default defineConfig({
   base: './',
-  plugins: [react(), tailwindcss(), stockfishEngine()],
+  plugins: [react(), tailwindcss(), stockfishEngine(), serviceWorker()],
   build: {
     target: 'es2022',
   },

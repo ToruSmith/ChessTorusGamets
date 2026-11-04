@@ -7,3 +7,4 @@ export * from './material.ts';
 export * from './clock.ts';
 export { Game, IllegalMoveError, InvalidFenError, checkFen, type FenCheck } from './game.ts';
 export * from './match.ts';
+export * from './openings.ts';

@@ -281,8 +281,38 @@ LocalMatch（之後的 OnlineMatch 也一樣）
   升變的兵沿用原本的 id，王車易位的車也會滑動。若系統設定「減少動態效果」，就不播動畫。
 - 鍵盤操作棋盤還沒有做，列在之後的改進。
 
+## 開局資料（M5）
+
+- Lichess 公開的 `chess-openings`（CC0）經 `scripts/build-openings.ts` 轉成 UCI，存成 `src/core/data/openings.json`。
+- `core/openings.ts` 的 `OpeningBook` 依「從初始局面開始的棋步序列」查詢，在執行時不需要產生合法手，所以很快。
+  - 用另一種走法順序轉入的局面不會被認出，名稱會停在最後一個符合的那一條。
+  - 資料是動態載入的獨立檔案。
+- 用途：
+  - 賽後分析顯示每個局面的開局名稱。
+  - 對電腦時，前 12 手從開局庫隨機選一步，讓開局有變化。
+  - 引擎無法使用時，先走開局庫，再不行就走任一合法手，確保對局可以繼續。
+- 不做開局統計（各走法的勝率、次數）。
+
+## PWA 與離線（M5）
+
+- `public/manifest.webmanifest` 與 `public/icons/`：圖示是自製 SVG，PNG 由 `npm run generate:icons` 產生。
+- `vite.config.ts` 的 `serviceWorker` 外掛在建置時產生 `sw.js`，把這次輸出的所有檔案列入預先快取：
+  JS、CSS、引擎、開局資料、圖示與 manifest。
+  - 版本號取自檔案清單的雜湊，部署新版會換一個新的快取，並刪掉舊的。
+  - 頁面導覽走網路優先，所以部署後下次開啟就是新版；離線時改用快取的頁面。
+  - 其他同源資源走快取優先。比對時用網址並忽略 `Vary`，因為頁面的 `crossorigin` 請求帶有 `Origin`。
+  - Firebase 等外部請求不經過快取。
+- 離線時可以用雙人同機、對電腦、賽後分析；線上對戰需要網路。
+
 ## 部署（M5）
 
-部署到本專案專屬的 Cloudflare Pages：建置指令 `npm run build`，輸出 `dist/`。
-Firebase 設定以 `VITE_FIREBASE_*` 環境變數在建置時注入，變數名稱見 `.env.example`。
-不使用 Cloudflare Worker 或其他伺服器。
+- 部署到本專案專屬的 Cloudflare Pages：建置指令 `npm run build`，輸出 `dist/`，Node 版本由 `.nvmrc` 決定。
+- Firebase 設定以 `VITE_FIREBASE_*` 環境變數在建置時注入。
+- `public/_headers` 設定快取規則：
+  - `sw.js`、`index.html`、manifest 不快取。
+  - `assets/` 永久快取，因為檔名帶雜湊。
+  - `engine/` 快取一天。
+- 路由都在網址雜湊裡，所以不需要轉址設定。
+- `npm run smoke -- <網址>` 是部署後的驗收：檢查首頁、`_headers`、manifest、引擎、Service Worker 與離線重新整理、Firebase 設定。
+  加上 `--online` 會實際匿名登入並讀取大廳，只讀不寫。
+- 不使用 Cloudflare Worker 或其他伺服器。

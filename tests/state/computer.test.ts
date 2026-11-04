@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { after, describe, it } from 'node:test';
 import { UciEngine } from '../../src/ai/index.ts';
+import { loadOpeningBook } from '../../src/core/index.ts';
 import {
   AnalysisSession,
   ComputerMatch,
@@ -84,6 +85,39 @@ describe('ComputerMatch', () => {
   });
 });
 
+describe('ComputerMatch and the Lichess opening book', () => {
+  it('opens with a book move', async () => {
+    const book = await loadOpeningBook();
+    const match = ComputerMatch.create(
+      engine,
+      { humanColor: 'b', level: 8 },
+      { minDelayMs: 0, random: () => 0 },
+    );
+    match.start();
+    await settle(match);
+    const first = match.snapshot.history[0]?.uci ?? '';
+    assert.ok(book.continuations([]).includes(first), first);
+  });
+
+  it('falls back to the book, then to any legal move, when the engine fails', async () => {
+    const broken = {
+      search: () => Promise.reject(new Error('engine failed to load')),
+      newGame: async () => undefined,
+      stop: () => undefined,
+    } as unknown as UciEngine;
+    const match = ComputerMatch.create(broken, { humanColor: 'w', level: 5 }, fast);
+    // Leave the book at once so the engine is needed.
+    match.play({ from: 'a2', to: 'a3' });
+    await settle(match);
+    assert.equal(match.snapshot.history.length, 2);
+    match.play({ from: 'h2', to: 'h3' });
+    await settle(match);
+    match.play({ from: 'a3', to: 'a4' });
+    await settle(match);
+    assert.equal(match.snapshot.history.length, 6, 'the computer keeps playing legal moves');
+  });
+});
+
 describe('analysis', () => {
   it('is only offered once a game is over', () => {
     const local = LocalMatch.create({ timeControl: null });
@@ -110,6 +144,8 @@ describe('analysis', () => {
     assert.equal(judgements[2], 'blunder', 'g4 allows mate in one');
     assert.equal(judgements[3], 'best', 'Qh4# is the best move');
     assert.ok(summary.w.blunder >= 1);
+    assert.equal(session.snapshot.openings[0], null);
+    assert.ok(session.snapshot.openings[1]?.name, 'f3 has a name in the Lichess data');
     session.goTo(-5);
     assert.equal(session.snapshot.index, 0);
   });

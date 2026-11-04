@@ -2,6 +2,7 @@
 // every other locale must provide exactly the same keys.
 export const zhTW = {
   'app.title': '西洋棋',
+  'app.documentTitle': '西洋棋 ChessTorusGamets',
   'app.tagline': '在瀏覽器裡下西洋棋：雙人同機、線上對戰、電腦對手與賽後分析。',
   'app.languageSwitch': 'English',
   'app.languageSwitchLabel': '切換語言',
@@ -127,6 +128,7 @@ export const zhTW = {
   'computer.noClock': '對電腦不計時。',
   'action.hint': '提示',
   'action.analyze': '賽後分析',
+  'analysis.opening': '開局：{name}（{eco}）',
   'analysis.title': '賽後分析',
   'analysis.empty': '還沒有可以分析的對局。下完一盤棋後，在結果視窗按「賽後分析」。',
   'analysis.progress': '分析中… {percent}%',

@@ -18,7 +18,10 @@
     "test": "node --test \"tests/**/*.test.ts\"",
     "test:e2e": "playwright test",
     "check": "npm run typecheck && npm run format:check && npm test && npm run build",
-    "build:e2e": "vite build --mode e2e --outDir dist-e2e"
+    "build:e2e": "vite build --mode e2e --outDir dist-e2e",
+    "smoke": "node scripts/smoke.ts",
+    "generate:icons": "node scripts/generate-icons.ts",
+    "generate:openings": "node scripts/build-openings.ts"
   },
   "dependencies": {
     "chess.js": "^1.4.0",
