@@ -82,6 +82,13 @@ export interface Auth {
   readonly uid: string;
 }
 
+/** The query parameters a read rule sees as `query`. */
+export interface ReadQuery {
+  readonly orderByChild?: string;
+  readonly limitToFirst?: number;
+  readonly limitToLast?: number;
+}
+
 export class PermissionDenied extends Error {
   constructor(path: string, reason: string) {
     super(`PERMISSION_DENIED at /${path}: ${reason}`);
@@ -113,7 +120,7 @@ export class RulesDatabase {
     this.#data = structuredClone(data);
   }
 
-  read(auth: Auth | null, path: string, now: number): unknown {
+  read(auth: Auth | null, path: string, now: number, query: ReadQuery = {}): unknown {
     const parts = splitPath(path);
     const chain = this.#chain(parts);
     const allowed = chain.some(({ match, depth }) =>
@@ -123,6 +130,7 @@ export class RulesDatabase {
         path: parts.slice(0, depth),
         newRoot: this.#data,
         vars: match?.vars ?? {},
+        query,
       }),
     );
     if (!allowed) throw new PermissionDenied(path, 'read');
@@ -223,6 +231,7 @@ export class RulesDatabase {
       path: readonly string[];
       newRoot: Tree;
       vars: Record<string, string>;
+      query?: ReadQuery;
     },
   ): boolean {
     if (rule === undefined) return false;
@@ -236,6 +245,7 @@ export class RulesDatabase {
         'root',
         'data',
         'newData',
+        'query',
         ...names,
         `return (${rule});`,
       ) as (...args: unknown[]) => unknown;
@@ -246,6 +256,7 @@ export class RulesDatabase {
           new Snapshot(this.#data, []),
           new Snapshot(this.#data, context.path),
           new Snapshot(context.newRoot, context.path),
+          { orderByChild: null, limitToFirst: null, limitToLast: null, ...context.query },
           ...names.map((name) => context.vars[name]),
         ) === true
       );
