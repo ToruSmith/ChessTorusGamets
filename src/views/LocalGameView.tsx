@@ -1,12 +1,12 @@
 import { useEffect, useState } from 'react';
 import { ChessBoard } from '../board/ChessBoard.tsx';
 import { Button } from '../components/Button.tsx';
-import { ClockFace } from '../components/ClockFace.tsx';
+import { PlayerBar, ResultCard, statusText } from '../components/GameParts.tsx';
 import { MoveList } from '../components/MoveList.tsx';
 import { useStore } from '../components/useStore.ts';
 import { opposite, type Color, type GameResult, type MoveInput } from '../core/index.ts';
 import { useI18n } from '../i18n/I18nProvider.tsx';
-import { LocalMatch, TIME_PRESETS, type MatchSnapshot, type TimePreset } from '../state/index.ts';
+import { LocalMatch, TIME_PRESETS, type TimePreset } from '../state/index.ts';
 
 const STORAGE_KEY = 'chess.local.v1';
 
@@ -136,11 +136,12 @@ function LocalGame({ match, onNewGame }: { match: LocalMatch; onNewGame: () => v
             onMove={onMove}
           />
           {result && result !== dismissedResult && (
-            <ResultCard
-              result={result}
-              onNewGame={onNewGame}
-              onClose={() => setDismissedResult(result)}
-            />
+            <ResultCard result={result}>
+              <Button variant="primary" onClick={onNewGame}>
+                {t('action.newGame')}
+              </Button>
+              <Button onClick={() => setDismissedResult(result)}>{t('action.close')}</Button>
+            </ResultCard>
           )}
         </div>
         <PlayerBar snapshot={snapshot} color={orientation} />
@@ -148,11 +149,7 @@ function LocalGame({ match, onNewGame }: { match: LocalMatch; onNewGame: () => v
 
       <aside className="flex flex-col gap-4">
         <p className="text-lg font-medium" role="status" data-testid="status">
-          {result
-            ? `${result.winner ? t('result.win', { color: color(result.winner) }) : t('result.draw')} · ${t(`reason.${result.reason}`)}`
-            : snapshot.checkSquare
-              ? t('status.check', { color: color(turn) })
-              : t('status.toMove', { color: color(turn) })}
+          {statusText(t, snapshot)}
         </p>
 
         {!result && snapshot.drawOffer && (
@@ -222,58 +219,6 @@ function LocalGame({ match, onNewGame }: { match: LocalMatch; onNewGame: () => v
           <MoveList moves={snapshot.history} />
         </section>
       </aside>
-    </div>
-  );
-}
-
-function PlayerBar({ snapshot, color }: { snapshot: MatchSnapshot; color: Color }) {
-  const { t } = useI18n();
-  const toMove = !snapshot.result && snapshot.turn === color;
-  return (
-    <div className="flex items-center justify-between gap-3" data-player={color}>
-      <span className="flex items-center gap-2">
-        <span
-          aria-hidden
-          className={`inline-block size-3 rounded-full border border-black/40 ${color === 'w' ? 'bg-ivory' : 'bg-[#2c2621]'} ${toMove ? 'ring-2 ring-brass ring-offset-2 ring-offset-felt' : ''}`}
-        />
-        {t(`color.${color}`)}
-      </span>
-      {snapshot.clock && <ClockFace clock={snapshot.clock} color={color} />}
-    </div>
-  );
-}
-
-function ResultCard({
-  result,
-  onNewGame,
-  onClose,
-}: {
-  result: GameResult;
-  onNewGame: () => void;
-  onClose: () => void;
-}) {
-  const { t } = useI18n();
-  return (
-    <div className="absolute inset-0 flex items-center justify-center bg-black/40 p-4">
-      <div
-        role="dialog"
-        aria-labelledby="result-title"
-        data-testid="result"
-        className="flex w-full max-w-xs flex-col items-center gap-3 rounded-lg border border-brass/60 bg-felt p-5 text-center shadow-xl"
-      >
-        <h2 id="result-title" className="text-2xl font-semibold">
-          {result.winner
-            ? t('result.win', { color: t(`color.${result.winner}`) })
-            : t('result.draw')}
-        </h2>
-        <p className="text-ivory-muted">{t(`reason.${result.reason}`)}</p>
-        <div className="flex gap-2">
-          <Button variant="primary" onClick={onNewGame}>
-            {t('action.newGame')}
-          </Button>
-          <Button onClick={onClose}>{t('action.close')}</Button>
-        </div>
-      </div>
     </div>
   );
 }

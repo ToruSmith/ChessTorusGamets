@@ -19,7 +19,8 @@ export default defineConfig({
     { name: 'mobile', use: { ...devices['Pixel 7'] } },
   ],
   webServer: {
-    command: `npm run build && npm run preview -- --port ${PORT} --strictPort`,
+    // The e2e build replaces Firebase with a same-browser backend (see .env.e2e).
+    command: `npm run build:e2e && npx vite preview --outDir dist-e2e --port ${PORT} --strictPort`,
     url: `http://localhost:${PORT}/`,
     reuseExistingServer: !isCI,
     timeout: 120_000,

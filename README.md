@@ -3,13 +3,14 @@
 在瀏覽器裡下西洋棋的網頁遊戲：雙人同機、線上對戰、電腦對手與賽後分析。
 規則與引擎都在瀏覽器裡執行，線上對戰使用 Firebase，不需要自建伺服器。
 
-> 目前進度：**M2 雙人同機**完成，可以在同一台裝置上對下。線上對戰、電腦對手從 M3、M4 開始。
+> 目前進度：**M3 線上對戰**完成（需要設定 Firebase）。電腦對手與賽後分析從 M4 開始。
 
 ## 規劃中的功能
 
 - **雙人同機**（M2，已完成）：一台裝置輪流下。點選或拖曳走子、升變選子、悔棋（不計時時）、翻轉棋盤、
   提和、認輸、聲明和棋，可選時制，重新整理後接著下。
-- **線上對戰**（M3）：開房間分享代碼，匿名登入、免註冊。
+- **線上對戰**（M3，已完成）：開房間分享連結或房號，或從大廳加入公開房間；匿名登入、免註冊。
+  可以觀戰、提和、聲明和棋、認輸，對局結束後可以再來一局（交換先後手）。
 - **電腦對手與賽後分析**（M4）：Stockfish.js 在 Web Worker 中執行。
 - **PWA、英文介面、備用開局與正式部署**（M5）。
 
@@ -34,17 +35,17 @@ npm run dev
 
 ## 指令
 
-| 指令                   | 用途                                 |
-| ---------------------- | ------------------------------------ |
-| `npm run dev`          | 開發伺服器                           |
-| `npm run build`        | 正式版建置到 `dist/`                 |
-| `npm run preview`      | 預覽 `dist/`                         |
-| `npm run typecheck`    | TypeScript 型別檢查                  |
-| `npm run format`       | Prettier 排版                        |
-| `npm run format:check` | 檢查排版                             |
-| `npm test`             | 單元測試（node:test）                |
-| `npm run test:e2e`     | 端對端測試（Playwright），會自動建置 |
-| `npm run check`        | 型別、排版、單元測試、建置一次跑完   |
+| 指令                   | 用途                                        |
+| ---------------------- | ------------------------------------------- |
+| `npm run dev`          | 開發伺服器                                  |
+| `npm run build`        | 正式版建置到 `dist/`                        |
+| `npm run preview`      | 預覽 `dist/`                                |
+| `npm run typecheck`    | TypeScript 型別檢查                         |
+| `npm run format`       | Prettier 排版                               |
+| `npm run format:check` | 檢查排版                                    |
+| `npm test`             | 單元測試（node:test）                       |
+| `npm run test:e2e`     | 端對端測試（Playwright），會自動建置 e2e 版 |
+| `npm run check`        | 型別、排版、單元測試、建置一次跑完          |
 
 第一次跑端對端測試前要安裝瀏覽器：
 
@@ -63,10 +64,34 @@ npx playwright install chromium
 
 架構與設計見 [docs/architecture.md](docs/architecture.md)，重要決定與理由見 [docs/decisions.md](docs/decisions.md)，開發規則見 [CLAUDE.md](CLAUDE.md)。
 
-## 設定 Firebase（M3 之後才需要）
+## 設定 Firebase（線上對戰）
 
-把 `.env.example` 複製成 `.env.local`，填入本專案 Firebase 網頁應用程式的設定值。
-`.env.local` 已列在 `.gitignore`，不要提交。
+沒有設定時，其他模式照常運作，線上對戰會顯示「尚未設定」。這個專案要用**自己專屬的** Firebase 專案。
+
+1. 在 [Firebase Console](https://console.firebase.google.com/) 建立專案。
+2. **Authentication → 登入方式**：啟用「匿名」。
+3. **Realtime Database**：建立資料庫（地區任選），記下資料庫網址。
+4. 部署資料庫規則（`firebase.json` 已指向 `database.rules.json`）：
+
+   ```bash
+   npx firebase-tools deploy --only database --project <你的專案 ID>
+   ```
+
+   也可以把 `database.rules.json` 的內容貼到 Console 的「規則」分頁後發布。
+
+5. **專案設定 → 一般 → 你的應用程式**：新增網頁應用程式，把設定值填進環境變數（名稱見 `.env.example`）：
+
+   | 變數                         | 對應的設定值  |
+   | ---------------------------- | ------------- |
+   | `VITE_FIREBASE_API_KEY`      | `apiKey`      |
+   | `VITE_FIREBASE_AUTH_DOMAIN`  | `authDomain`  |
+   | `VITE_FIREBASE_DATABASE_URL` | `databaseURL` |
+   | `VITE_FIREBASE_PROJECT_ID`   | `projectId`   |
+   | `VITE_FIREBASE_APP_ID`       | `appId`       |
+
+   本機開發時複製成 `.env.local`（已被 `.gitignore` 排除）；部署時設定在 Cloudflare Pages 的環境變數（M5）。
+
+這些值會出現在每個訪客的瀏覽器裡，本身不是祕密，資料安全由 `database.rules.json` 把關；但仍然不要提交到儲存庫。
 
 ## 授權
 

@@ -1,15 +1,19 @@
 import { LanguageSwitch } from './components/LanguageSwitch.tsx';
 import { useHashRoute } from './components/useHashRoute.ts';
+import { ONLINE_CONFIG } from './config.ts';
 import { useI18n } from './i18n/I18nProvider.tsx';
+import { normalizeRoomCode } from './state/index.ts';
 import { HomeView } from './views/HomeView.tsx';
 import { LocalGameView } from './views/LocalGameView.tsx';
+import { OnlineLobbyView } from './views/OnlineLobbyView.tsx';
+import { OnlineRoomView } from './views/OnlineRoomView.tsx';
 
 const SOURCE_URL = 'https://github.com/ToruSmith/ChessTorusGamets';
 
 export function App() {
   const { t } = useI18n();
   const route = useHashRoute();
-  const view = route === '/local' ? <LocalGameView /> : <HomeView />;
+  const view = renderRoute(route);
 
   return (
     <div className="mx-auto flex min-h-dvh max-w-5xl flex-col px-4 py-4 sm:px-6">
@@ -32,4 +36,13 @@ export function App() {
       </footer>
     </div>
   );
+}
+
+function renderRoute(route: string) {
+  if (route === '/local') return <LocalGameView />;
+  if (route === '/online') return <OnlineLobbyView config={ONLINE_CONFIG} />;
+  const room = /^\/r\/([^/]+)$/.exec(route);
+  const code = room?.[1] ? normalizeRoomCode(room[1]) : null;
+  if (code) return <OnlineRoomView key={code} config={ONLINE_CONFIG} code={code} />;
+  return <HomeView />;
 }

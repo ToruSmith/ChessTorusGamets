@@ -115,42 +115,96 @@ i18n/：字典與翻譯函式，各層畫面都可以用；本身不依賴其他
 
 使用本專案專屬的 Firebase Realtime Database 與匿名登入，不自建伺服器。
 
-### 資料模型（草案，M3 定稿）
+```
+views/OnlineLobbyView、OnlineRoomView
+        │  useStore()
+        ▼
+state/OnlineService（連線、大廳、開房）、OnlineMatch（一個房間：重演、動作、再戰）
+        │
+        ▼
+online/session.ts（房間操作）──▶ RoomBackend 介面
+                                   ├─ online/firebase/backend.ts  正式版（唯一 import firebase 的檔案）
+                                   ├─ online/local-backend.ts     e2e 版（同一瀏覽器的分頁之間）
+                                   └─ tests/helpers/fake-server.ts 單元測試（規則模擬器）
+```
+
+- `RoomBackend` 只有六個方法：`uid`、`serverNow`、`get`、`watch`、`update`（多路徑原子更新）、
+  `newestRooms`。伺服器時間用 `SERVER_TIME` 占位，由各後端換成伺服器時鐘（Firebase 是 `serverTimestamp()`）。
+- Firebase SDK 只在進入線上對戰時才動態載入；沒有設定 `VITE_FIREBASE_*` 時，線上對戰顯示「尚未設定」，
+  其他模式不受影響。
+- 伺服器時間：Firebase 用 `.info/serverTimeOffset` 校正，雙方都用伺服器時間判斷超時。
+
+### 資料模型
 
 ```
-rooms/<房號>/
+rooms/<房號>/                     房號：6 碼，不含 0/O、1/I/L
   createdAt      伺服器時間
-  config         { 時制、是否公開 }
-  players/white  uid
-  players/black  uid
-  startedAt      第二位玩家入座時的伺服器時間
+  createdBy      建立者 uid
+  config         { initialMs（0 = 不計時）, incrementMs, public, creatorColor }   ← 建立後不可改
+  players/w, b   uid                                                            ← 各只能寫一次
+  startedAt      第二位玩家入座時的伺服器時間（與入座同一次寫入）
   n              目前手數
-  moves/<i>      { i, m: 'e2e4', t: 伺服器時間 }        ← 只能附加
-  events/<k>     { type, by: 'white'|'black', ply, t }  ← 只能附加
+  moves/<i>      { i, m: 'e2e4', t: 伺服器時間 }        ← 只能附加，與 n 同一次寫入
+  events/<k>     { type, by: 'w'|'b', ply, t }           ← 只能附加
+  rematch/w, b   true                                    ← 各自表態要再來一局
+  next           再戰房號（寫一次，與新房間同一次寫入）
+  prev           這是哪個房間的再戰
 ```
+
+`events` 的 key 以手數開頭（`0012-…`），排序後就是發生順序；重演時仍依 `ply` 與 `t` 處理。
 
 ### 不變式
 
 1. **棋步只能附加**。`moves/<i>` 必須和 `n = i + 1` 同一次多路徑更新寫入；規則禁止覆寫已存在的棋步，
-   並依 `n` 的奇偶確認輪到寫入者。
+   並依 `n` 的奇偶確認輪到寫入者。對局開始（`startedAt` 存在）前不能走棋。
 2. **每手帶伺服器時間戳**。規則要求 `t === now`，客戶端無法偽造時間。
 3. **勝負不寫入資料庫**。將死、逼和、死局面、五次重複、75 回合、超時，雙方都從棋步與時間戳重演得出，
-   結論必然一致。沒有任何欄位可以寫「我贏了」。
+   結論必然一致。沒有任何欄位可以寫「我贏了」（未列出的欄位一律被規則拒絕）。
 4. **超時由重演得出**。超過時限之後才寫入的棋步，重演時視為不存在。該方超時負，但符合 6.9 例外時判和。
 5. **認輸、提和、接受和棋、聲明和棋是附加事件**。`type` 是 `resign`、`draw-offer`、`draw-accept`、
-   `draw-claim` 其中之一。事件同樣只能附加，並帶伺服器時間與當下手數 `ply`；`by` 必須是寫入者自己的座位。
-   事件是否有效由重演判斷，例如：
+   `draw-claim` 其中之一。事件同樣只能附加，並帶伺服器時間與當下手數（規則要求 `ply === n`）；
+   `by` 必須是寫入者自己的座位。事件是否有效由重演判斷，例如：
    - 接受和棋時，對方是否真的有尚未失效的提和。
    - 聲明和棋時，三次重複或 50 回合的條件是否成立，而且是由輪到的一方提出。
    - 「走這步並聲明和棋」時，棋步與 `draw-claim` 必須在同一次多路徑更新中寫入。
 6. **規則擋不到的壞資料由重演判負**。例如不合法的棋步：重演到那一手時，寫入的一方判負。
 
-規則檔 `database.rules.json` 會有一個在測試中逐條求值的模擬器，讓每次寫入（含作弊情境）都經過規則。
+### 規則與測試
+
+- 規則在 `database.rules.json`（`firebase.json` 指向它，部署時用）。
+- `tests/helpers/rules-db.ts` 是規則模擬器：真的載入 `database.rules.json`，依 Firebase 文件的語意逐條求值。
+  `.write` 往下繼承；`.validate` 檢查寫入節點、其下所有節點與上層節點；`$變數` 萬用字元；運算式出錯視為 false。
+  `tests/helpers/fake-server.ts` 用它組成多個客戶端與可控時鐘的假伺服器。
+- `tests/online/rules.test.ts` 直接測規則，包括各種作弊情境：
+  - 改寫棋步、輪不到時走棋、偽造時間
+  - 替別人入座、寫入勝負
+  - 替對方認輸、重複連結再戰房間
+- `tests/online/online-match.test.ts` 讓兩個客戶端透過假伺服器完整對局：
+  - 大廳、入座、觀戰
+  - 將死、認輸、提和、兩種聲明和棋
+  - 伺服器時間超時、再戰
+- 模擬器不是 Firebase 官方引擎。大改規則後，請到 Firebase Console 的 Rules Playground 再確認一次。
+
+### 開房、入座、觀戰、再戰
+
+- 開房：建立者坐在選定的顏色（可選隨機），可選擇是否公開在大廳。
+- 入座：第二位玩家一次寫入自己的座位與 `startedAt`；之後進入房間的人都是觀戰者（只能看）。
+- 大廳：讀最新 30 個房間，只列出公開、只有一人、還沒開始，而且不是自己開的房間。
+- 再戰：雙方都表態後，**上一盤的白方**建立新房間（顏色互換、不公開），並在同一次寫入裡設定舊房間的 `next`。
+  雙方看到 `next` 就前往新房間，另一方因為是 `prev` 房間的玩家而自動入座。
+
+### e2e 測試用的本機後端
+
+`npm run test:e2e` 使用 `vite build --mode e2e`（`.env.e2e` 設定 `VITE_ONLINE_BACKEND=local`），輸出到 `dist-e2e/`。
+本機後端把資料放在 `localStorage`，用 `storage` 事件通知其他分頁，讓兩個分頁可以對局。
+BroadcastChannel 的訊息可能比 `localStorage` 同步得早，造成讀到舊資料，所以不用它。
+它不執行資料庫規則（規則由單元測試涵蓋），也是 `online/` 中唯一碰瀏覽器儲存的檔案。
 
 ### 線上對局中禁止引擎
 
-對局進行中，`state/` 不提供引擎分析、提示或評估條；畫面因為不能直接 import `ai/`，也無法繞過。
-對局結束後（含觀戰結束）才開放賽後分析。
+`OnlineMatch` 的快照有 `analysisAllowed`，只有對局結束後才是 `true`。觀戰者也一樣，避免觀戰者把引擎建議轉給玩家。
+M4 加入的任何引擎功能（分析、提示、評估條）都必須檢查它；畫面不能直接 import `ai/`，只能經過 `state/`，
+所以這是唯一的入口。
 
 ## 電腦對手與分析（M4）
 
