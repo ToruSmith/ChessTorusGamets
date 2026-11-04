@@ -22,6 +22,8 @@ export interface ChessBoardProps {
   readonly lastMove: Pick<Move, 'from' | 'to'> | null;
   readonly checkSquare: Square | null;
   readonly onMove: (move: MoveInput) => void;
+  /** Arrows drawn over the board, e.g. a hint or the engine's best move. */
+  readonly arrows?: readonly { readonly from: Square; readonly to: Square }[];
 }
 
 const LIGHT = '#eadcc0';
@@ -66,6 +68,7 @@ export function ChessBoard({
   lastMove,
   checkSquare,
   onMove,
+  arrows = [],
 }: ChessBoardProps) {
   const { t } = useI18n();
   const uid = useId();
@@ -214,6 +217,7 @@ export function ChessBoard({
   const hidden = drag?.moved ? drag.from : null;
   const dragged = drag?.moved ? pieceAt(drag.from) : undefined;
   const checkGradient = `${uid}-check`;
+  const arrowHead = `${uid}-arrow`;
 
   return (
     <svg
@@ -235,6 +239,17 @@ export function ChessBoard({
           <stop offset="55%" stopColor="#e0281c" stopOpacity={0.6} />
           <stop offset="100%" stopColor="#a01010" stopOpacity={0} />
         </radialGradient>
+        <marker
+          id={arrowHead}
+          viewBox="0 0 10 10"
+          refX="5"
+          refY="5"
+          markerWidth="3"
+          markerHeight="3"
+          orient="auto"
+        >
+          <path d="M0 0 L10 5 L0 10 Z" fill="rgba(30, 120, 70, 0.85)" />
+        </marker>
       </defs>
       <g>{squares}</g>
       <g pointerEvents="none">
@@ -288,6 +303,31 @@ export function ChessBoard({
               cy={y + 50}
               r={15}
               fill="rgba(20, 50, 30, 0.4)"
+            />
+          );
+        })}
+      </g>
+      <g pointerEvents="none" data-testid="arrows">
+        {arrows.map(({ from, to }) => {
+          const a = cellOrigin(from);
+          const b = cellOrigin(to);
+          const dx = b.x - a.x;
+          const dy = b.y - a.y;
+          const length = Math.hypot(dx, dy) || 1;
+          // Stop short of the target centre so the head sits inside the square.
+          const end = { x: b.x + 50 - (dx / length) * 22, y: b.y + 50 - (dy / length) * 22 };
+          return (
+            <line
+              key={`${from}${to}`}
+              data-arrow={`${from}${to}`}
+              x1={a.x + 50}
+              y1={a.y + 50}
+              x2={end.x}
+              y2={end.y}
+              stroke="rgba(30, 120, 70, 0.85)"
+              strokeWidth={16}
+              strokeLinecap="round"
+              markerEnd={`url(#${arrowHead})`}
             />
           );
         })}

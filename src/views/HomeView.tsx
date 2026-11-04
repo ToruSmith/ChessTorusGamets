@@ -22,8 +22,18 @@ const MODES: readonly ModeCard[] = [
     description: 'mode.online.description',
     href: '#/online',
   },
-  { id: 'computer', title: 'mode.computer.title', description: 'mode.computer.description' },
-  { id: 'analysis', title: 'mode.analysis.title', description: 'mode.analysis.description' },
+  {
+    id: 'computer',
+    title: 'mode.computer.title',
+    description: 'mode.computer.description',
+    href: '#/computer',
+  },
+  {
+    id: 'analysis',
+    title: 'mode.analysis.title',
+    description: 'mode.analysis.description',
+    href: '#/analysis',
+  },
 ];
 
 export function HomeView() {

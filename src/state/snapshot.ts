@@ -34,6 +34,18 @@ export interface MatchSnapshot {
   readonly timeControl: TimeControl | null;
   readonly clock: ClockView | null;
   readonly canUndo: boolean;
+  /**
+   * The game to hand to post-game analysis, or null while the game is on. Engine
+   * analysis is only ever started from this, so no engine sees a game in progress.
+   */
+  readonly analysis: AnalysisRequest | null;
+}
+
+export interface AnalysisRequest {
+  readonly startFen: string;
+  /** UCI moves. */
+  readonly moves: readonly string[];
+  readonly result: GameResult;
 }
 
 export function buildSnapshot(
@@ -61,5 +73,8 @@ export function buildSnapshot(
     timeControl,
     clock: state.clock ? { ...state.clock, running: options.clockStarted && !result } : null,
     canUndo: options.canUndo,
+    analysis: result
+      ? { startFen: game.startFen, moves: game.moves.map((move) => move.uci), result }
+      : null,
   };
 }

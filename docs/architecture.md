@@ -208,10 +208,38 @@ M4 加入的任何引擎功能（分析、提示、評估條）都必須檢查�
 
 ## 電腦對手與分析（M4）
 
-- Stockfish.js 的 **lite 單執行緒版**，在 Web Worker 中執行，不需要 `SharedArrayBuffer`，
-  因此不必設定 COOP／COEP 標頭。
-- 主執行緒只透過 UCI 文字行和 Worker 溝通，`ai/` 定義與實作無關的引擎介面。
-- 難度用 UCI 的 `Skill Level`、搜尋深度或時間限制調整。
+```
+views/ComputerGameView、AnalysisView
+        │  useStore()
+        ▼
+state/ComputerMatch（對電腦）、AnalysisSession（賽後分析）、getEngine（每頁共用一個引擎）
+        │
+        ▼
+ai/UciEngine ──▶ UciTransport ──▶ Web Worker：engine/stockfish-19-lite-single.js（＋ .wasm）
+                                └▶ 測試：npm 套件 stockfish（Node 中跑同一個引擎）
+```
+
+- **引擎**：Stockfish.js 19.0.1 的 lite 單執行緒版，不需要 `SharedArrayBuffer`，所以不必設定 COOP／COEP 標頭。
+  `vite.config.ts` 的小外掛把 `.js`、`.wasm` 與 `SOURCE.txt`（GPL 原始碼位置）複製到 `dist/engine/`，開發時也從 `/engine/` 提供。
+  只有進入對電腦、提示或賽後分析時才下載（wasm 約 1.2 MB gzip）。
+- **`ai/`**：
+  - `uci.ts`：解析 `info` 與 `bestmove`（純函式）。
+  - `engine.ts`：`UciEngine`，請求依序排隊。初始化時會重送 `isready`，因為有些環境在引擎載入完成前會丟掉輸入。
+  - `levels.ts`：八個難度。低難度靠 Stockfish 的 `Skill Level`，並限制深度與時間。
+  - `analysis.ts`：分數轉白方勝率（Lichess 公開的 logistic 曲線），以及依走子方勝率下降判斷好壞手：
+    10 點不精確、20 點錯著、30 點大錯；走了引擎首選就是「最佳」。
+- **`ComputerMatch`**：棋步存在一個不計時的 `LocalMatch` 裡，所以勝負與和棋判定與其他模式完全相同。
+  電腦在輪到它時搜尋；可聲明和棋而且自己不佔優時就聲明。悔棋會退回到玩家的上一個回合。
+- **`AnalysisSession`**：逐一評估每個局面（深度 12），算出每手的判斷與雙方的錯誤統計，並記住引擎首選（畫成箭頭）。
+  已經結束的局面（將死、和棋）不問引擎，直接給定勝率。
+
+### 引擎只看結束的對局
+
+- `MatchSnapshot.analysis` 只有在對局結束後才有值。賽後分析只能從它開始，畫面把它存到 `localStorage` 再前往 `#/analysis`。
+- 線上對局另外再看 `OnlineSnapshot.analysisAllowed`；進行中的線上對局沒有提示、沒有分析按鈕。
+- 提示只存在於對電腦的模式。
+- 這些限制都在 `state/` 與畫面上把關。瀏覽器端的限制擋不住有心人自己開別的引擎，
+  目的是讓這個網站本身不會在對局中提供引擎協助。
 
 ## 一盤棋的控制器：`state/`（M2）
 
@@ -235,7 +263,8 @@ LocalMatch（之後的 OnlineMatch 也一樣）
 
 ## 介面
 
-- 路由用網址雜湊：`#/` 首頁、`#/local` 雙人同機（之後 `#/r/<房號>` 線上房間）。靜態主機不需要轉址設定。
+- 路由用網址雜湊：`#/` 首頁、`#/local` 雙人同機、`#/computer` 對電腦、`#/analysis` 賽後分析、
+  `#/online` 大廳、`#/r/<房號>` 線上房間。靜態主機不需要轉址設定。
 - 所有文字都經過 `i18n/`：預設繁體中文（`zh-TW`），英文字典 `en.ts` 的型別是 `Messages`，
   少一個或多一個 key 都會型別錯誤。
 

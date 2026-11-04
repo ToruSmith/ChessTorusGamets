@@ -7,6 +7,7 @@ import {
   isFlagged,
   opposite,
   replayMatch,
+  type Color,
   type MatchEvent,
   type MatchEventType,
   type MatchState,
@@ -94,9 +95,9 @@ export class LocalMatch {
     return true;
   }
 
-  /** The side to move resigns. */
-  resign(): void {
-    this.#event('resign', this.#state.game.turn());
+  /** A player resigns: by default the side to move. */
+  resign(by: Color = this.#state.game.turn()): void {
+    this.#event('resign', by);
   }
 
   /** The side to move offers a draw. */

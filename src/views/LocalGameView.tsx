@@ -3,6 +3,7 @@ import { ChessBoard } from '../board/ChessBoard.tsx';
 import { Button } from '../components/Button.tsx';
 import { PlayerBar, ResultCard, statusText } from '../components/GameParts.tsx';
 import { MoveList } from '../components/MoveList.tsx';
+import { openAnalysis } from '../components/openAnalysis.ts';
 import { useStore } from '../components/useStore.ts';
 import { opposite, type Color, type GameResult, type MoveInput } from '../core/index.ts';
 import { useI18n } from '../i18n/I18nProvider.tsx';
@@ -137,9 +138,15 @@ function LocalGame({ match, onNewGame }: { match: LocalMatch; onNewGame: () => v
           />
           {result && result !== dismissedResult && (
             <ResultCard result={result}>
-              <Button variant="primary" onClick={onNewGame}>
-                {t('action.newGame')}
-              </Button>
+              {snapshot.analysis && (
+                <Button
+                  variant="primary"
+                  onClick={() => snapshot.analysis && openAnalysis(snapshot.analysis)}
+                >
+                  {t('action.analyze')}
+                </Button>
+              )}
+              <Button onClick={onNewGame}>{t('action.newGame')}</Button>
               <Button onClick={() => setDismissedResult(result)}>{t('action.close')}</Button>
             </ResultCard>
           )}

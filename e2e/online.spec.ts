@@ -114,6 +114,16 @@ test('resigning ends the game for both players', async ({ page }) => {
   await bob.getByRole('button', { name: '確定' }).click();
   await expect(alice.getByTestId('result')).toContainText('白方勝');
   await expect(alice.getByTestId('result')).toContainText('認輸');
+  // Engine analysis opens only now that the game is over.
+  await expect(alice.getByTestId('result').getByRole('button', { name: '賽後分析' })).toBeVisible();
+});
+
+test('no engine analysis while an online game is on', async ({ page }) => {
+  const { alice } = await twoPlayers(page);
+  await clickMove(alice, 'e2', 'e4');
+  await expect(alice.getByText('對局進行中不提供引擎分析與提示。')).toBeVisible();
+  await expect(alice.getByRole('button', { name: '賽後分析' })).toHaveCount(0);
+  await expect(alice.getByRole('button', { name: '提示' })).toHaveCount(0);
 });
 
 test('a third visitor watches without being able to move', async ({ page }) => {

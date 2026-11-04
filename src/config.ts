@@ -1,5 +1,5 @@
 // Build-time configuration, read once by the app and handed to the views.
-import type { OnlineConfig } from './state/index.ts';
+import { workerEngine, type EngineFactory, type OnlineConfig } from './state/index.ts';
 
 export function onlineConfigFromEnv(env: ImportMetaEnv): OnlineConfig | null {
   if (env.VITE_ONLINE_BACKEND === 'local') return { kind: 'local' };
@@ -16,3 +16,8 @@ export function onlineConfigFromEnv(env: ImportMetaEnv): OnlineConfig | null {
 }
 
 export const ONLINE_CONFIG = onlineConfigFromEnv(import.meta.env);
+
+/** Stockfish.js lite single-threaded, copied to engine/ by the Vite plugin in vite.config.ts. */
+export const ENGINE: EngineFactory = workerEngine(
+  new URL('engine/stockfish-19-lite-single.js', document.baseURI).href,
+);

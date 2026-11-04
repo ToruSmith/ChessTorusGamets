@@ -61,6 +61,13 @@ app / views / components / board  ──▶  state  ──▶  ai, online  ─�
 - 改 `database.rules.json` 時，同時在 `tests/online/rules.test.ts` 加上正反兩面的測試。
 - e2e 版（`npm run build:e2e`，`.env.e2e`）用 `online/local-backend.ts` 取代 Firebase；它不執行規則。
 
+## 引擎（M4）
+
+- Stockfish.js lite 單執行緒版（`stockfish` 套件，版本見 `package.json`）。`vite.config.ts` 的外掛把它複製到 `engine/`；
+  升級版本時同時改外掛裡的檔名、`src/config.ts` 的網址與 `engine/SOURCE.txt` 的內容。
+- 引擎分析只能從 `MatchSnapshot.analysis`（對局結束才有）開始；線上另外看 `analysisAllowed`。提示只在對電腦模式。
+- 單元測試用 `tests/helpers/node-engine.ts` 在 Node 跑真的引擎。
+
 ## 勝負與和棋（依 FIDE 正式比賽規定，詳見 `docs/architecture.md`）
 
 - **自動結束**：將死、逼和、死局面、五次重複局面（9.6.1）、75 回合規則（9.6.2）、超時（6.9）。

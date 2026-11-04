@@ -1,8 +1,10 @@
 import { LanguageSwitch } from './components/LanguageSwitch.tsx';
 import { useHashRoute } from './components/useHashRoute.ts';
-import { ONLINE_CONFIG } from './config.ts';
+import { ENGINE, ONLINE_CONFIG } from './config.ts';
 import { useI18n } from './i18n/I18nProvider.tsx';
 import { normalizeRoomCode } from './state/index.ts';
+import { AnalysisView } from './views/AnalysisView.tsx';
+import { ComputerGameView } from './views/ComputerGameView.tsx';
 import { HomeView } from './views/HomeView.tsx';
 import { LocalGameView } from './views/LocalGameView.tsx';
 import { OnlineLobbyView } from './views/OnlineLobbyView.tsx';
@@ -40,6 +42,8 @@ export function App() {
 
 function renderRoute(route: string) {
   if (route === '/local') return <LocalGameView />;
+  if (route === '/computer') return <ComputerGameView engine={ENGINE} />;
+  if (route === '/analysis') return <AnalysisView engine={ENGINE} />;
   if (route === '/online') return <OnlineLobbyView config={ONLINE_CONFIG} />;
   const room = /^\/r\/([^/]+)$/.exec(route);
   const code = room?.[1] ? normalizeRoomCode(room[1]) : null;
