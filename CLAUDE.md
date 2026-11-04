@@ -35,7 +35,8 @@ Firebase Realtime Database + 匿名登入、Cloudflare Pages。Node 22（`.nvmrc
 app / views / components / board  ──▶  state  ──▶  ai, online  ──▶  core
 ```
 
-- `chess.js` **只能**在 `src/core/` 使用。UI 只能用 `core/` 輸出的本專案型別與函式。
+- `chess.js` **只能**在 `src/core/` 使用（實際上只有 `core/game.ts`）。UI 只能用 `core/` 輸出的本專案型別與函式。
+- 其他層 import `core/` 時一律經過 `src/core/index.ts`。
 - `firebase` 只能在 `src/online/firebase/` 使用；其他地方透過 `RoomBackend` 介面。
 - `stockfish` 只能在 `src/ai/` 使用，並在 Web Worker 中執行。
 - `core/`、`ai/`、`online/`、`state/` 不可依賴 React、DOM 或儲存。
@@ -89,6 +90,9 @@ app / views / components / board  ──▶  state  ──▶  ai, online  ─�
 | M5     | PWA、i18n、Lichess 備用開局與完成部署 |
 
 - 每個里程碑獨立一個 PR，**等使用者確認後才進行下一個**。
+- 指令沒寫到的部分採用合理預設值；有多個方案時選風險最低、最容易日後修改的。重要決定記在 `docs/decisions.md`。
+- 只有需要付費、密鑰、登入使用者帳號、在 Firebase／Cloudflare／GitHub 手動操作、刪除資料或難以復原的動作、
+  改變授權或既定需求時，才停下來詢問；需要手動操作時，先做完其他部分，再一次列出所有待辦。
 - PR 說明要列出計畫、假設、做了什麼，以及 typecheck、format、test、build、e2e 的結果。
 
 ## 不做的事

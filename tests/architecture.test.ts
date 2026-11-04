@@ -84,7 +84,8 @@ describe('import rule checker', () => {
       findViolations([{ path, source: `import x from '${specifier}';` }]).length;
     assert.equal(check('src/core/game.ts', '../state/match.ts'), 1);
     assert.equal(check('src/core/game.ts', './position.ts'), 0);
-    assert.equal(check('src/online/session.ts', '../core/game.ts'), 0);
+    assert.equal(check('src/online/session.ts', '../core/index.ts'), 0);
+    assert.equal(check('src/online/session.ts', '../core/game.ts'), 1);
     assert.equal(check('src/online/session.ts', '../ai/engine.ts'), 1);
     assert.equal(check('src/views/PlayView.tsx', '../state/match.ts'), 0);
     assert.equal(check('src/views/PlayView.tsx', '../online/session.ts'), 1);
@@ -92,5 +93,7 @@ describe('import rule checker', () => {
     assert.equal(check('src/state/match.ts', '../views/PlayView.tsx'), 1);
     assert.equal(check('src/App.tsx', './views/HomeView.tsx'), 0);
     assert.equal(check('src/core/game.ts', '../../tests/helpers/x.ts'), 1);
+    assert.equal(check('src/board/Board.tsx', '../core/index.ts'), 0);
+    assert.equal(check('src/board/Board.tsx', '../core/types.ts'), 1);
   });
 });
