@@ -21,3 +21,12 @@
     @apply bg-felt font-sans text-ivory antialiased;
   }
 }
+
+/* Detail strokes inside pieces (eye, mane, bands) use the piece's contrast colour. */
+.piece-glyph [data-detail] {
+  stroke: var(--piece-detail);
+  stroke-width: 2.5;
+}
+.piece-glyph circle[data-detail] {
+  fill: var(--piece-detail);
+}
