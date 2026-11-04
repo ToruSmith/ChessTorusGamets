@@ -159,12 +159,44 @@ rooms/<房號>/
 - 主執行緒只透過 UCI 文字行和 Worker 溝通，`ai/` 定義與實作無關的引擎介面。
 - 難度用 UCI 的 `Skill Level`、搜尋深度或時間限制調整。
 
+## 一盤棋的控制器：`state/`（M2）
+
+```
+LocalMatch（之後的 OnlineMatch 也一樣）
+  record：起始 FEN、時制、moves[{uci, t}]、events[{type, by, ply, t}]
+     │  每次變動都整份重演
+     ▼
+  core.replayMatch(record, now) ──▶ MatchSnapshot ──▶ store ──▶ useStore() ──▶ 畫面
+```
+
+- `LocalMatch` 只保存紀錄（record），每次走子、悔棋或新增事件都重演整份紀錄，產生不可變的 `MatchSnapshot`。
+  快照內容包括：局面、合法手、棋譜、將軍格、結果、提和、可聲明的和棋、棋鐘。
+- `store.ts` 是很小的可觀察值。畫面用 `components/useStore.ts`（`useSyncExternalStore`）訂閱；
+  `state/` 本身不依賴 React。
+- 動作：`play`、`undo`、`resign`、`offerDraw`、`acceptDraw`、`claimDraw`、`tick`（檢查超時）。
+  認輸、提和、聲明和棋都由**輪到走棋的一方**提出；接受和棋由提和方的對手提出。
+- 棋鐘從白方第一手開始走，所以第一手不耗時。計時對局不能悔棋。
+- 紀錄可以 `toJSON()` 存起來、`fromJSON()` 還原（會驗證格式）。雙人同機把它存在 `localStorage`，
+  重新整理後接著下。這是畫面層（`views/`）的事，`state/` 不碰儲存。
+
 ## 介面
 
-- 棋盤、棋子、動畫都是自製 SVG，不使用外部棋子圖片。
+- 路由用網址雜湊：`#/` 首頁、`#/local` 雙人同機（之後 `#/r/<房號>` 線上房間）。靜態主機不需要轉址設定。
 - 所有文字都經過 `i18n/`：預設繁體中文（`zh-TW`），英文字典 `en.ts` 的型別是 `Messages`，
   少一個或多一個 key 都會型別錯誤。
-- 路由預計使用網址雜湊（`#/play`、`#/r/<房號>`），靜態主機不需要轉址設定。
+
+### 棋盤：`board/`
+
+- 棋盤、棋子、提示與動畫都是自製 SVG（`viewBox` 800×800，每格 100），不使用外部棋子圖片。
+  棋子造型在 `pieces.tsx`，是本專案原創的簡化 Staunton 風格。
+- `ChessBoard` 只收 `pieces`、`legalMoves`、`lastMove`、`checkSquare`、`orientation`，走好之後呼叫 `onMove`。
+  合法手清單是空的，棋盤就只能看不能動。
+- 操作：點選（再點一次取消）或拖曳；可以走的格子顯示圓點，可以吃子的格子顯示圓環。
+  升變時在目標格展開四個棋子讓玩家選。
+- 動畫：`identity.ts` 依上一個局面與最後一手，替每枚棋子決定穩定的 id。
+  id 不變的棋子在 React 裡不會重建，換了 `transform` 就由 CSS transition 滑過去；
+  升變的兵沿用原本的 id，王車易位的車也會滑動。若系統設定「減少動態效果」，就不播動畫。
+- 鍵盤操作棋盤還沒有做，列在之後的改進。
 
 ## 部署（M5）
 

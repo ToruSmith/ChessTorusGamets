@@ -14,7 +14,7 @@
 | `scheduler` | 0.28.0 | MIT          | <https://github.com/facebook/react>  |
 | `chess.js`  | 1.4.0  | BSD-2-Clause | <https://github.com/jhlywa/chess.js> |
 
-`chess.js` 只在 `src/core/game.ts` 使用；畫面從 M2 開始使用 `core/` 後，它就會被打包進網站。
+`chess.js` 只在 `src/core/game.ts` 使用，從 M2 起隨畫面打包進網站。
 
 `tailwindcss` 產生的 CSS（含 preflight 基礎樣式）也會進入 `dist/`，授權為 MIT。
 

@@ -5,10 +5,17 @@ interface ModeCard {
   id: string;
   title: MessageKey;
   description: MessageKey;
+  /** Route for modes that are ready to play. */
+  href?: string;
 }
 
 const MODES: readonly ModeCard[] = [
-  { id: 'local', title: 'mode.local.title', description: 'mode.local.description' },
+  {
+    id: 'local',
+    title: 'mode.local.title',
+    description: 'mode.local.description',
+    href: '#/local',
+  },
   { id: 'online', title: 'mode.online.title', description: 'mode.online.description' },
   { id: 'computer', title: 'mode.computer.title', description: 'mode.computer.description' },
   { id: 'analysis', title: 'mode.analysis.title', description: 'mode.analysis.description' },
@@ -30,18 +37,31 @@ export function HomeView() {
         </h2>
         <ul className="grid gap-3 sm:grid-cols-2">
           {MODES.map((mode) => (
-            <li
-              key={mode.id}
-              data-mode={mode.id}
-              className="flex flex-col gap-1 rounded-lg border border-white/10 bg-felt-raised p-4"
-            >
-              <div className="flex items-center justify-between gap-2">
-                <span className="font-medium">{t(mode.title)}</span>
-                <span className="rounded-full bg-walnut/40 px-2 py-0.5 text-xs text-ivory-muted">
-                  {t('home.comingSoon')}
-                </span>
-              </div>
-              <p className="text-sm text-ivory-muted">{t(mode.description)}</p>
+            <li key={mode.id} data-mode={mode.id}>
+              {mode.href ? (
+                <a
+                  href={mode.href}
+                  className="flex h-full flex-col gap-1 rounded-lg border border-brass/50 bg-felt-raised p-4 transition-colors hover:border-brass hover:bg-[#33423a] focus-visible:outline-2 focus-visible:outline-brass"
+                >
+                  <span className="flex items-center justify-between gap-2">
+                    <span className="font-medium">{t(mode.title)}</span>
+                    <span className="rounded-full bg-brass px-2 py-0.5 text-xs text-felt">
+                      {t('home.play')}
+                    </span>
+                  </span>
+                  <span className="text-sm text-ivory-muted">{t(mode.description)}</span>
+                </a>
+              ) : (
+                <div className="flex h-full flex-col gap-1 rounded-lg border border-white/10 bg-felt-raised p-4 opacity-80">
+                  <span className="flex items-center justify-between gap-2">
+                    <span className="font-medium">{t(mode.title)}</span>
+                    <span className="rounded-full bg-walnut/40 px-2 py-0.5 text-xs text-ivory-muted">
+                      {t('home.comingSoon')}
+                    </span>
+                  </span>
+                  <span className="text-sm text-ivory-muted">{t(mode.description)}</span>
+                </div>
+              )}
             </li>
           ))}
         </ul>
