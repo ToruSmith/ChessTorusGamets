@@ -1,9 +1,10 @@
 {
   "rules": {
     "rooms": {
-      ".read": "auth != null",
+      ".read": "auth != null && query.orderByChild === 'createdAt' && query.limitToLast != null && query.limitToLast <= 30",
       ".indexOn": ["createdAt"],
       "$code": {
+        ".read": "auth != null",
         ".write": "auth != null && !data.exists() && $code.matches(/^[A-HJKMNP-Z2-9]{6}$/) && newData.child('createdBy').val() === auth.uid && newData.child('players').child(newData.child('config/creatorColor').val()).val() === auth.uid && !(newData.child('players/w').exists() && newData.child('players/b').exists()) && newData.child('n').val() === 0 && !newData.child('startedAt').exists() && !newData.child('moves').exists() && !newData.child('events').exists() && !newData.child('rematch').exists() && !newData.child('next').exists()",
         ".validate": "newData.hasChildren(['createdAt', 'createdBy', 'config', 'players', 'n'])",
         "createdAt": {

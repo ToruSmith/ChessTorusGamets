@@ -38,8 +38,9 @@ export class FakeServer {
         for (const listener of [...this.#listeners]) listener();
       },
       newestRooms: async (limit) => {
-        const rooms = (this.db.read(auth, 'rooms', this.now) ?? {}) as Record<string, unknown>;
-        const entries = Object.entries(rooms).sort(
+        const query = { orderByChild: 'createdAt', limitToLast: limit };
+        const rooms = this.db.read(auth, 'rooms', this.now, query) ?? {};
+        const entries = Object.entries(rooms as Record<string, unknown>).sort(
           ([, a], [, b]) => Number(getAt(a, 'createdAt')) - Number(getAt(b, 'createdAt')),
         );
         return Object.fromEntries(entries.slice(-limit));

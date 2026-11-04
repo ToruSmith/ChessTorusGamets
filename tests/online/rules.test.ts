@@ -53,6 +53,22 @@ describe('rules: reading', () => {
     assert.throws(() => db.read(null, ROOM, NOW), PermissionDenied);
     assert.throws(() => db.read(eve, '', NOW), PermissionDenied);
   });
+
+  it('the room list can only be read through the bounded lobby query', () => {
+    startedRoom();
+    const lobby = { orderByChild: 'createdAt', limitToLast: 30 };
+    assert.ok(db.read(eve, 'rooms', NOW, lobby));
+    assert.throws(() => db.read(null, 'rooms', NOW, lobby), PermissionDenied);
+    assert.throws(() => db.read(eve, 'rooms', NOW), PermissionDenied);
+    assert.throws(
+      () => db.read(eve, 'rooms', NOW, { orderByChild: 'createdAt', limitToLast: 31 }),
+      PermissionDenied,
+    );
+    assert.throws(
+      () => db.read(eve, 'rooms', NOW, { orderByChild: 'createdAt', limitToFirst: 10 }),
+      PermissionDenied,
+    );
+  });
 });
 
 describe('rules: creating a room', () => {
