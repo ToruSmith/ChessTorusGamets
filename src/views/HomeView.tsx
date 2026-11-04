@@ -9,6 +9,8 @@ interface ModeCard {
   href?: string;
 }
 
+const HUB_URL = 'https://torusmith.github.io/QiguanGamets/';
+
 const MODES: readonly ModeCard[] = [
   {
     id: 'local',
@@ -44,6 +46,12 @@ export function HomeView() {
       <section className="flex flex-col gap-3">
         <h1 className="text-4xl font-semibold tracking-wide sm:text-5xl">{t('app.title')}</h1>
         <p className="max-w-prose text-ivory-muted">{t('app.tagline')}</p>
+        <a
+          href={HUB_URL}
+          className="w-fit text-sm text-ivory-muted underline underline-offset-4 hover:text-ivory"
+        >
+          {t('home.hub')}
+        </a>
       </section>
 
       <section aria-labelledby="modes-heading" className="flex flex-col gap-4">

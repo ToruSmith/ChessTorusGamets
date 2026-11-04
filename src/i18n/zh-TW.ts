@@ -18,6 +18,7 @@ export const zhTW = {
   'mode.analysis.description': '逐手復盤，標出好棋與失誤。',
   'footer.license': '以 GPL-3.0 授權釋出',
   'footer.source': '原始碼',
+  'home.hub': '回手談棋館',
   'home.play': '開始',
   'nav.home': '回首頁',
   'local.title': '雙人同機',
