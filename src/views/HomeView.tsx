@@ -16,7 +16,12 @@ const MODES: readonly ModeCard[] = [
     description: 'mode.local.description',
     href: '#/local',
   },
-  { id: 'online', title: 'mode.online.title', description: 'mode.online.description' },
+  {
+    id: 'online',
+    title: 'mode.online.title',
+    description: 'mode.online.description',
+    href: '#/online',
+  },
   { id: 'computer', title: 'mode.computer.title', description: 'mode.computer.description' },
   { id: 'analysis', title: 'mode.analysis.title', description: 'mode.analysis.description' },
 ];

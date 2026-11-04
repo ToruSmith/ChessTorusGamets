@@ -1,0 +1,112 @@
+{
+  "rules": {
+    "rooms": {
+      ".read": "auth != null",
+      ".indexOn": ["createdAt"],
+      "$code": {
+        ".write": "auth != null && !data.exists() && $code.matches(/^[A-HJKMNP-Z2-9]{6}$/) && newData.child('createdBy').val() === auth.uid && newData.child('players').child(newData.child('config/creatorColor').val()).val() === auth.uid && !(newData.child('players/w').exists() && newData.child('players/b').exists()) && newData.child('n').val() === 0 && !newData.child('startedAt').exists() && !newData.child('moves').exists() && !newData.child('events').exists() && !newData.child('rematch').exists() && !newData.child('next').exists()",
+        ".validate": "newData.hasChildren(['createdAt', 'createdBy', 'config', 'players', 'n'])",
+        "createdAt": {
+          ".validate": "!data.exists() && newData.val() === now"
+        },
+        "createdBy": {
+          ".validate": "!data.exists() && newData.isString()"
+        },
+        "prev": {
+          ".validate": "!data.exists() && newData.isString() && newData.val().matches(/^[A-HJKMNP-Z2-9]{6}$/)"
+        },
+        "config": {
+          ".validate": "!data.exists() && newData.hasChildren(['initialMs', 'incrementMs', 'public', 'creatorColor'])",
+          "initialMs": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 10800000"
+          },
+          "incrementMs": {
+            ".validate": "newData.isNumber() && newData.val() >= 0 && newData.val() <= 60000"
+          },
+          "public": {
+            ".validate": "newData.isBoolean()"
+          },
+          "creatorColor": {
+            ".validate": "newData.val() === 'w' || newData.val() === 'b'"
+          },
+          "$other": {
+            ".validate": false
+          }
+        },
+        "players": {
+          "w": {
+            ".write": "auth != null && !data.exists() && newData.val() === auth.uid && data.parent().child('b').exists() && data.parent().child('b').val() !== auth.uid && newData.parent().parent().child('startedAt').val() === now",
+            ".validate": "newData.isString()"
+          },
+          "b": {
+            ".write": "auth != null && !data.exists() && newData.val() === auth.uid && data.parent().child('w').exists() && data.parent().child('w').val() !== auth.uid && newData.parent().parent().child('startedAt').val() === now",
+            ".validate": "newData.isString()"
+          },
+          "$other": {
+            ".validate": false
+          }
+        },
+        "startedAt": {
+          ".write": "auth != null && !data.exists() && newData.val() === now && newData.parent().child('players/w').exists() && newData.parent().child('players/b').exists() && (newData.parent().child('players/w').val() === auth.uid || newData.parent().child('players/b').val() === auth.uid)",
+          ".validate": "newData.isNumber()"
+        },
+        "n": {
+          ".write": "auth != null && data.exists() && data.parent().child('startedAt').exists() && data.val() < 1200 && newData.val() === data.val() + 1 && newData.parent().child('moves').child(data.val() + '').exists() && !data.parent().child('moves').child(data.val() + '').exists() && ((data.val() % 2 === 0 && data.parent().child('players/w').val() === auth.uid) || (data.val() % 2 === 1 && data.parent().child('players/b').val() === auth.uid))",
+          ".validate": "newData.isNumber()"
+        },
+        "moves": {
+          "$i": {
+            ".write": "auth != null && !data.exists() && data.parent().parent().child('startedAt').exists() && data.parent().parent().child('n').exists() && $i === data.parent().parent().child('n').val() + '' && newData.parent().parent().child('n').val() === data.parent().parent().child('n').val() + 1 && ((data.parent().parent().child('n').val() % 2 === 0 && data.parent().parent().child('players/w').val() === auth.uid) || (data.parent().parent().child('n').val() % 2 === 1 && data.parent().parent().child('players/b').val() === auth.uid))",
+            ".validate": "newData.hasChildren(['i', 'm', 't'])",
+            "i": {
+              ".validate": "newData.isNumber() && newData.val() + '' === $i"
+            },
+            "m": {
+              ".validate": "newData.isString() && newData.val().matches(/^[a-h][1-8][a-h][1-8][qrbn]?$/)"
+            },
+            "t": {
+              ".validate": "newData.val() === now"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        },
+        "events": {
+          "$e": {
+            ".write": "auth != null && !data.exists() && data.parent().parent().child('startedAt').exists() && ((newData.child('by').val() === 'w' && data.parent().parent().child('players/w').val() === auth.uid) || (newData.child('by').val() === 'b' && data.parent().parent().child('players/b').val() === auth.uid))",
+            ".validate": "$e.length <= 40 && newData.hasChildren(['type', 'by', 'ply', 't'])",
+            "type": {
+              ".validate": "newData.val() === 'resign' || newData.val() === 'draw-offer' || newData.val() === 'draw-accept' || newData.val() === 'draw-claim'"
+            },
+            "by": {
+              ".validate": "newData.val() === 'w' || newData.val() === 'b'"
+            },
+            "ply": {
+              ".validate": "newData.isNumber() && newData.val() === newData.parent().parent().parent().child('n').val()"
+            },
+            "t": {
+              ".validate": "newData.val() === now"
+            },
+            "$other": {
+              ".validate": false
+            }
+          }
+        },
+        "rematch": {
+          "$seat": {
+            ".write": "auth != null && !data.exists() && data.parent().parent().child('players').child($seat).val() === auth.uid",
+            ".validate": "newData.val() === true"
+          }
+        },
+        "next": {
+          ".write": "auth != null && !data.exists() && (data.parent().child('players/w').val() === auth.uid || data.parent().child('players/b').val() === auth.uid) && data.parent().child('rematch/w').exists() && data.parent().child('rematch/b').exists()",
+          ".validate": "newData.isString() && newData.val().matches(/^[A-HJKMNP-Z2-9]{6}$/)"
+        },
+        "$other": {
+          ".validate": false
+        }
+      }
+    }
+  }
+}

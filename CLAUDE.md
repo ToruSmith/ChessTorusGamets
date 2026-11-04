@@ -16,16 +16,16 @@ Firebase Realtime Database + 匿名登入、Cloudflare Pages。Node 22（`.nvmrc
 
 ## 指令
 
-| 指令                   | 用途                                        |
-| ---------------------- | ------------------------------------------- |
-| `npm run dev`          | 開發伺服器                                  |
-| `npm run typecheck`    | 型別檢查（`src/` 與測試／設定檔分兩個專案） |
-| `npm run format`       | Prettier 排版                               |
-| `npm run format:check` | 檢查排版（CI 使用）                         |
-| `npm test`             | 單元測試（node:test，Node 原生執行 TS）     |
-| `npm run test:e2e`     | Playwright 端對端測試（自動建置並啟動預覽） |
-| `npm run build`        | 正式版建置到 `dist/`                        |
-| `npm run check`        | typecheck + format:check + test + build     |
+| 指令                   | 用途                                               |
+| ---------------------- | -------------------------------------------------- |
+| `npm run dev`          | 開發伺服器                                         |
+| `npm run typecheck`    | 型別檢查（`src/` 與測試／設定檔分兩個專案）        |
+| `npm run format`       | Prettier 排版                                      |
+| `npm run format:check` | 檢查排版（CI 使用）                                |
+| `npm test`             | 單元測試（node:test，Node 原生執行 TS）            |
+| `npm run test:e2e`     | Playwright 端對端測試（自動建置 e2e 版並啟動預覽） |
+| `npm run build`        | 正式版建置到 `dist/`                               |
+| `npm run check`        | typecheck + format:check + test + build            |
 
 開 PR 前必須 `npm run check` 與 `npm run test:e2e` 全部通過。
 
@@ -57,7 +57,9 @@ app / views / components / board  ──▶  state  ──▶  ai, online  ─�
 - 棋步只能附加：`moves/<i>` 與 `n` 同一次寫入，不可覆寫；每手帶伺服器時間戳（規則要求 `t === now`）。
 - 勝負與超時**不寫入資料庫**，由棋步與時間戳重演得出。
 - 認輸、提和、接受和棋、聲明和棋以**附加事件**記錄，有效性由重演判斷。
-- **線上對局進行中，不可使用引擎分析或提示**；由 `state/` 把關，對局結束後才開放分析。
+- **線上對局進行中，不可使用引擎分析或提示**；由 `state/` 把關（`OnlineSnapshot.analysisAllowed`），對局結束後才開放分析。
+- 改 `database.rules.json` 時，同時在 `tests/online/rules.test.ts` 加上正反兩面的測試。
+- e2e 版（`npm run build:e2e`，`.env.e2e`）用 `online/local-backend.ts` 取代 Firebase；它不執行規則。
 
 ## 勝負與和棋（依 FIDE 正式比賽規定，詳見 `docs/architecture.md`）
 

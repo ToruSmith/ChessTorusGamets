@@ -1,10 +1,12 @@
 node_modules/
 dist/
+dist-e2e/
 dist-ssr/
 *.local
 .env
 .env.*
 !.env.example
+!.env.e2e
 coverage/
 test-results/
 playwright-report/
