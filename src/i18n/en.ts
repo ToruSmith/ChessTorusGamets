@@ -19,6 +19,7 @@ export const en: Messages = {
   'mode.analysis.description': 'Step through the game and see the good moves and the mistakes.',
   'footer.license': 'Released under GPL-3.0',
   'footer.source': 'Source code',
+  'home.hub': 'All board games',
   'home.play': 'Play',
   'nav.home': 'Home',
   'local.title': 'Two players, one device',
