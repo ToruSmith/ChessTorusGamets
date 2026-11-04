@@ -84,11 +84,18 @@ await check('app starts without errors', async () => {
 });
 
 await check('service worker and offline reload', async () => {
-  await page.evaluate(async () => {
-    await navigator.serviceWorker.ready;
-  });
+  // `ready` never settles when no service worker is registered, so give up after 15 s.
+  const registered = await page.evaluate(() =>
+    Promise.race([
+      navigator.serviceWorker.ready.then(() => true),
+      new Promise<boolean>((resolve) => setTimeout(() => resolve(false), 15_000)),
+    ]),
+  );
+  expect(registered, 'no service worker registered (is sw.js deployed?)');
   await page.reload();
-  await page.waitForFunction(() => navigator.serviceWorker.controller !== null);
+  await page.waitForFunction(() => navigator.serviceWorker.controller !== null, null, {
+    timeout: 15_000,
+  });
   await context.setOffline(true);
   await page.reload();
   await page.getByRole('heading', { level: 1 }).waitFor({ timeout: 10_000 });
