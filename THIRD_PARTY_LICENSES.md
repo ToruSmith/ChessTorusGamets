@@ -15,10 +15,15 @@
 | `chess.js`                                                                          | 1.4.0  | BSD-2-Clause | <https://github.com/jhlywa/chess.js>          |
 | `firebase`（含 `@firebase/app`、`auth`、`database`、`component`、`logger`、`util`） | 13.1.0 | Apache-2.0   | <https://github.com/firebase/firebase-js-sdk> |
 | `idb`（Firebase 的依賴）                                                            | 7.1.1  | ISC          | <https://github.com/jakearchibald/idb>        |
+| Stockfish.js（`stockfish`，lite 單執行緒版 `stockfish-19-lite-single.js`／`.wasm`） | 19.0.1 | GPL-3.0      | <https://github.com/nmrugg/stockfish.js>      |
 
 `chess.js` 只在 `src/core/game.ts` 使用，從 M2 起隨畫面打包進網站。
 Firebase SDK 打包成獨立的檔案，只有進入線上對戰時才下載。
 這張表是用 Vite 建置時實際收進 bundle 的套件整理的，新增依賴後請重新確認。
+
+Stockfish.js 以**未修改**的形式複製到 `dist/engine/`，在 Web Worker 中執行，只有對電腦、提示或賽後分析時才下載。
+它以 GPL-3.0 授權（與本專案相同），內含 Stockfish 引擎與其神經網路參數。依 GPL-3.0 第 6 條，對應原始碼在
+<https://github.com/nmrugg/stockfish.js/tree/v19.0.1>，網站上的 `engine/SOURCE.txt` 也寫明這個位置；授權全文與本專案的 `LICENSE` 相同。
 
 `@grpc/grpc-js` 透過 `package.json` 的 `overrides` 固定在 1.13.7（已修補安全性問題的版本）。
 它只被 Firebase 的 Firestore 在 Node 環境使用，本專案沒有用到 Firestore，也不會打包進網站。
@@ -44,10 +49,9 @@ Firebase SDK 打包成獨立的檔案，只有進入線上對戰時才下載。
 
 ## 預定在後續里程碑加入
 
-| 套件                                             | 里程碑 | 授權                    | 用途                                   |
-| ------------------------------------------------ | ------ | ----------------------- | -------------------------------------- |
-| Stockfish.js（lite 單執行緒版）                  | M4     | GPL-3.0                 | 電腦對手與賽後分析，在 Web Worker 執行 |
-| Lichess 開局資料（`lichess-org/chess-openings`） | M5     | CC0-1.0（加入時再確認） | 備用開局                               |
+| 套件                                             | 里程碑 | 授權                    | 用途     |
+| ------------------------------------------------ | ------ | ----------------------- | -------- |
+| Lichess 開局資料（`lichess-org/chess-openings`） | M5     | CC0-1.0（加入時再確認） | 備用開局 |
 
 ## 素材
 

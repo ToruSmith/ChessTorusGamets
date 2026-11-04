@@ -3,6 +3,7 @@ import { ChessBoard } from '../board/ChessBoard.tsx';
 import { Button } from '../components/Button.tsx';
 import { PlayerBar, ResultCard, statusText } from '../components/GameParts.tsx';
 import { MoveList } from '../components/MoveList.tsx';
+import { openAnalysis } from '../components/openAnalysis.ts';
 import { useStore } from '../components/useStore.ts';
 import { opposite, type Color, type GameResult, type MoveInput } from '../core/index.ts';
 import { useI18n } from '../i18n/I18nProvider.tsx';
@@ -149,6 +150,11 @@ function Game({ match }: { match: OnlineMatch }) {
           {result && result !== dismissed && (
             <ResultCard result={result}>
               {seat && <RematchButton match={match} />}
+              {snapshot.analysisAllowed && game.analysis && (
+                <Button onClick={() => game.analysis && openAnalysis(game.analysis)}>
+                  {t('action.analyze')}
+                </Button>
+              )}
               <Button onClick={() => setDismissed(result)}>{t('action.close')}</Button>
             </ResultCard>
           )}

@@ -5,3 +5,7 @@ export * from './presets.ts';
 export * from './online-match.ts';
 export * from './online-service.ts';
 export { normalizeRoomCode } from '../online/index.ts';
+export * from './engine-service.ts';
+export * from './computer-match.ts';
+export * from './analysis-session.ts';
+export { LEVELS, type MoveJudgement } from '../ai/index.ts';
