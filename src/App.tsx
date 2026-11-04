@@ -9,6 +9,7 @@ import { HomeView } from './views/HomeView.tsx';
 import { LocalGameView } from './views/LocalGameView.tsx';
 import { OnlineLobbyView } from './views/OnlineLobbyView.tsx';
 import { OnlineRoomView } from './views/OnlineRoomView.tsx';
+import { PuzzlesView } from './views/PuzzlesView.tsx';
 
 const SOURCE_URL = 'https://github.com/ToruSmith/ChessTorusGamets';
 
@@ -45,6 +46,7 @@ function renderRoute(route: string) {
   if (route === '/computer') return <ComputerGameView engine={ENGINE} />;
   if (route === '/analysis') return <AnalysisView engine={ENGINE} />;
   if (route === '/online') return <OnlineLobbyView config={ONLINE_CONFIG} />;
+  if (route === '/puzzles') return <PuzzlesView />;
   const room = /^\/r\/([^/]+)$/.exec(route);
   const code = room?.[1] ? normalizeRoomCode(room[1]) : null;
   if (code) return <OnlineRoomView key={code} config={ONLINE_CONFIG} code={code} />;

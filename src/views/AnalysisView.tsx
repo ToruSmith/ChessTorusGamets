@@ -2,9 +2,17 @@ import { useEffect, useMemo, useState } from 'react';
 import { ChessBoard } from '../board/ChessBoard.tsx';
 import { Button } from '../components/Button.tsx';
 import { resultTitle } from '../components/GameParts.tsx';
-import { ANALYSIS_STORAGE_KEY } from '../components/openAnalysis.ts';
+import { ANALYSIS_STORAGE_KEY, saveAnalysisRequest } from '../components/openAnalysis.ts';
 import { useStore } from '../components/useStore.ts';
-import { Game, opposite, type Color, type Square } from '../core/index.ts';
+import {
+  Game,
+  PgnError,
+  exportPgn,
+  opposite,
+  parsePgn,
+  type Color,
+  type Square,
+} from '../core/index.ts';
 import { useI18n } from '../i18n/I18nProvider.tsx';
 import {
   AnalysisSession,
@@ -32,26 +40,114 @@ function loadRequest() {
 
 export function AnalysisView({ engine }: { engine: EngineFactory }) {
   const { t } = useI18n();
-  const [request] = useState(loadRequest);
+  const [request, setRequest] = useState(loadRequest);
+  const onImport = (next: NonNullable<typeof request>) => {
+    saveAnalysisRequest(next);
+    setRequest(next);
+  };
   if (!request) {
     return (
-      <p
-        className="mx-auto max-w-md rounded-md border border-white/10 bg-felt-raised p-4"
-        data-testid="analysis-empty"
-      >
-        {t('analysis.empty')}
-      </p>
+      <div className="mx-auto flex max-w-md flex-col gap-4">
+        <p
+          className="rounded-md border border-white/10 bg-felt-raised p-4"
+          data-testid="analysis-empty"
+        >
+          {t('analysis.empty')}
+        </p>
+        <PgnImport onImport={onImport} />
+      </div>
     );
   }
-  return <Review engine={engine} request={request} />;
+  return (
+    <Review
+      key={JSON.stringify(request.moves)}
+      engine={engine}
+      request={request}
+      onImport={onImport}
+    />
+  );
+}
+
+type Request = NonNullable<ReturnType<typeof parseAnalysisRequest>>;
+
+function PgnImport({ onImport }: { onImport: (request: Request) => void }) {
+  const { t } = useI18n();
+  const [text, setText] = useState('');
+  const [failed, setFailed] = useState(false);
+  const submit = () => {
+    try {
+      const { startFen, moves, result } = parsePgn(text);
+      onImport({ startFen, moves: [...moves], result });
+    } catch (error) {
+      if (!(error instanceof PgnError)) throw error;
+      setFailed(true);
+    }
+  };
+  return (
+    <div className="flex flex-col gap-2">
+      <label htmlFor="pgn-text" className="text-sm font-medium">
+        {t('pgn.import')}
+      </label>
+      <textarea
+        id="pgn-text"
+        data-testid="pgn-text"
+        rows={5}
+        value={text}
+        onChange={(event) => {
+          setText(event.target.value);
+          setFailed(false);
+        }}
+        className="rounded-md border border-white/10 bg-felt-raised p-2 font-mono text-sm"
+      />
+      {failed && (
+        <p role="alert" className="text-sm text-red-300">
+          {t('pgn.error')}
+        </p>
+      )}
+      <Button onClick={submit} disabled={!text.trim()} data-testid="pgn-submit">
+        {t('pgn.submit')}
+      </Button>
+    </div>
+  );
+}
+
+function PgnTools({ text, onImport }: { text: string; onImport: (request: Request) => void }) {
+  const { t } = useI18n();
+  const [copied, setCopied] = useState(false);
+  const [importing, setImporting] = useState(false);
+  const copy = () => {
+    void navigator.clipboard?.writeText(text).then(() => setCopied(true));
+  };
+  const download = () => {
+    const url = URL.createObjectURL(new Blob([text], { type: 'application/x-chess-pgn' }));
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'game.pgn';
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="flex flex-wrap gap-2">
+        <Button onClick={copy} data-testid="pgn-copy">
+          {copied ? t('pgn.copied') : t('pgn.copy')}
+        </Button>
+        <Button onClick={download}>{t('pgn.download')}</Button>
+        <Button onClick={() => setImporting(!importing)}>{t('pgn.import')}</Button>
+      </div>
+      {importing && <PgnImport onImport={onImport} />}
+    </div>
+  );
 }
 
 function Review({
   engine,
   request,
+  onImport,
 }: {
   engine: EngineFactory;
-  request: NonNullable<ReturnType<typeof parseAnalysisRequest>>;
+  request: Request;
+  onImport: (request: Request) => void;
 }) {
   const { t } = useI18n();
   const session = useMemo(() => new AnalysisSession(getEngine(engine), request), [engine, request]);
@@ -141,6 +237,14 @@ function Review({
       </div>
 
       <aside className="flex flex-col gap-4">
+        <PgnTools
+          text={exportPgn({
+            startFen: snapshot.startFen,
+            moves: snapshot.moves,
+            result: snapshot.result,
+          })}
+          onImport={onImport}
+        />
         <h1 className="text-xl font-semibold">{t('analysis.title')}</h1>
         <p className="text-ivory-muted">
           {resultTitle(t, snapshot.result)} · {t(`reason.${snapshot.result.reason}`)}

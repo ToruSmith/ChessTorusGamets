@@ -8,3 +8,5 @@ export * from './clock.ts';
 export { Game, IllegalMoveError, InvalidFenError, checkFen, type FenCheck } from './game.ts';
 export * from './match.ts';
 export * from './openings.ts';
+export * from './pgn.ts';
+export * from './puzzles.ts';
