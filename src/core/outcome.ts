@@ -17,7 +17,10 @@ export type ResultReason =
   | 'timeout-vs-insufficient-material' // 6.9 exception
   // Draws by agreement or claim
   | 'agreement' // 5.2.3, 9.1
-  | DrawClaimReason;
+  | DrawClaimReason
+  // Records read from PGN
+  | 'imported'
+  | 'unfinished';
 
 export interface GameResult {
   /** null for a draw. */

@@ -33,6 +33,7 @@ export function PlayerBar({
 }
 
 export function resultTitle(t: ReturnType<typeof useI18n>['t'], result: GameResult): string {
+  if (result.reason === 'unfinished') return t('reason.unfinished');
   return result.winner ? t('result.win', { color: t(`color.${result.winner}`) }) : t('result.draw');
 }
 

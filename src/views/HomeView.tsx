@@ -36,6 +36,12 @@ const MODES: readonly ModeCard[] = [
     description: 'mode.analysis.description',
     href: '#/analysis',
   },
+  {
+    id: 'puzzles',
+    title: 'mode.puzzles.title',
+    description: 'mode.puzzles.description',
+    href: '#/puzzles',
+  },
 ];
 
 export function HomeView() {

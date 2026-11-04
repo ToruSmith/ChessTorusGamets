@@ -8,7 +8,7 @@ test('every screen is translated to English', async ({ page }) => {
   await page.getByRole('button', { name: '切換語言' }).click();
   await expect(page).toHaveTitle('Chess · ChessTorusGamets');
 
-  for (const route of ['#/', '#/local', '#/computer', '#/online', '#/analysis']) {
+  for (const route of ['#/', '#/local', '#/computer', '#/online', '#/analysis', '#/puzzles']) {
     await page.goto(`./${route}`);
     await page
       .locator('main')

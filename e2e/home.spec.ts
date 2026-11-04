@@ -9,7 +9,7 @@ test('shows the home page in Traditional Chinese by default', async ({ page }) =
   await expect(page).toHaveTitle(/西洋棋/);
   await expect(page.locator('html')).toHaveAttribute('lang', 'zh-Hant-TW');
   await expect(page.getByRole('heading', { level: 1 })).toHaveText('西洋棋');
-  await expect(page.locator('[data-mode]')).toHaveCount(4);
+  await expect(page.locator('[data-mode]')).toHaveCount(5);
   expect(errors).toEqual([]);
 });
 
