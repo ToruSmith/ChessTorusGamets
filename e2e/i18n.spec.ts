@@ -6,7 +6,7 @@ const CJK = /[一-鿿]/;
 test('every screen is translated to English', async ({ page }) => {
   await page.goto('./');
   await page.getByRole('button', { name: '切換語言' }).click();
-  await expect(page).toHaveTitle('Chess · ChessTorusGamets');
+  await expect(page).toHaveTitle('Chess');
 
   for (const route of ['#/', '#/local', '#/computer', '#/online', '#/analysis', '#/puzzles']) {
     await page.goto(`./${route}`);

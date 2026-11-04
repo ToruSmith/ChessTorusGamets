@@ -1,0 +1,32 @@
+name: Take screenshots
+
+on:
+  push:
+    branches: [feat/packaging]
+
+permissions:
+  contents: write
+
+jobs:
+  shots:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: sudo apt-get update && sudo apt-get install -y fonts-noto-cjk
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      - run: npx vite preview --port 4173 --strictPort &
+      - run: sleep 3
+      - run: cp .shots/shots.mjs shots.tmp.mjs && node shots.tmp.mjs && rm shots.tmp.mjs
+      - run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898319+github-actions[bot]@users.noreply.github.com'
+          git rm -q -r .shots .github/workflows/shots.yml
+          git add docs/screenshots
+          git commit -m 'docs: 西洋棋截圖'
+          for i in 1 2 3 4 5; do git push && break; sleep 10; done

@@ -2,7 +2,7 @@
 // every other locale must provide exactly the same keys.
 export const zhTW = {
   'app.title': '西洋棋',
-  'app.documentTitle': '西洋棋 ChessTorusGamets',
+  'app.documentTitle': '西洋棋',
   'app.tagline': '在瀏覽器裡下西洋棋：雙人同機、線上對戰、電腦對手與賽後分析。',
   'app.languageSwitch': 'English',
   'app.languageSwitchLabel': '切換語言',

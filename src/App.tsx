@@ -26,7 +26,7 @@ export function App() {
           className="text-sm tracking-widest text-ivory-muted hover:text-ivory"
           title={t('nav.home')}
         >
-          ChessTorusGamets
+          {t('app.title')}
         </a>
         <LanguageSwitch />
       </header>
