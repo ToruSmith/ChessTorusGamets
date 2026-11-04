@@ -14,3 +14,12 @@ createRoot(root).render(
     </I18nProvider>
   </StrictMode>,
 );
+
+// Offline support (PWA). Only in builds: the dev server has no sw.js.
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(() => {
+      // Without a service worker the app still works online.
+    });
+  });
+}

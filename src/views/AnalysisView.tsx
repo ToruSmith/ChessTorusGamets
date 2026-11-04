@@ -145,6 +145,14 @@ function Review({
         <p className="text-ivory-muted">
           {resultTitle(t, snapshot.result)} · {t(`reason.${snapshot.result.reason}`)}
         </p>
+        {snapshot.openings[index] && (
+          <p className="text-sm" data-testid="analysis-opening">
+            {t('analysis.opening', {
+              name: snapshot.openings[index]?.name ?? '',
+              eco: snapshot.openings[index]?.eco ?? '',
+            })}
+          </p>
+        )}
         <p className="text-sm" data-testid="analysis-progress">
           {snapshot.done
             ? t('analysis.done')

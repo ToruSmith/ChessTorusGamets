@@ -16,16 +16,19 @@ Firebase Realtime Database + 匿名登入、Cloudflare Pages。Node 22（`.nvmrc
 
 ## 指令
 
-| 指令                   | 用途                                               |
-| ---------------------- | -------------------------------------------------- |
-| `npm run dev`          | 開發伺服器                                         |
-| `npm run typecheck`    | 型別檢查（`src/` 與測試／設定檔分兩個專案）        |
-| `npm run format`       | Prettier 排版                                      |
-| `npm run format:check` | 檢查排版（CI 使用）                                |
-| `npm test`             | 單元測試（node:test，Node 原生執行 TS）            |
-| `npm run test:e2e`     | Playwright 端對端測試（自動建置 e2e 版並啟動預覽） |
-| `npm run build`        | 正式版建置到 `dist/`                               |
-| `npm run check`        | typecheck + format:check + test + build            |
+| 指令                                      | 用途                                               |
+| ----------------------------------------- | -------------------------------------------------- |
+| `npm run dev`                             | 開發伺服器                                         |
+| `npm run typecheck`                       | 型別檢查（`src/` 與測試／設定檔分兩個專案）        |
+| `npm run format`                          | Prettier 排版                                      |
+| `npm run format:check`                    | 檢查排版（CI 使用）                                |
+| `npm test`                                | 單元測試（node:test，Node 原生執行 TS）            |
+| `npm run test:e2e`                        | Playwright 端對端測試（自動建置 e2e 版並啟動預覽） |
+| `npm run build`                           | 正式版建置到 `dist/`                               |
+| `npm run check`                           | typecheck + format:check + test + build            |
+| `npm run smoke -- <網址>`                 | 部署後驗收（加 `--online` 會連 Firebase，只讀）    |
+| `npm run generate:icons`                  | 由 `public/icons/icon.svg` 產生 PNG 圖示           |
+| `npm run generate:openings -- <tsv 目錄>` | 由 Lichess `chess-openings` 產生開局資料           |
 
 開 PR 前必須 `npm run check` 與 `npm run test:e2e` 全部通過。
 
@@ -67,6 +70,12 @@ app / views / components / board  ──▶  state  ──▶  ai, online  ─�
   升級版本時同時改外掛裡的檔名、`src/config.ts` 的網址與 `engine/SOURCE.txt` 的內容。
 - 引擎分析只能從 `MatchSnapshot.analysis`（對局結束才有）開始；線上另外看 `analysisAllowed`。提示只在對電腦模式。
 - 單元測試用 `tests/helpers/node-engine.ts` 在 Node 跑真的引擎。
+
+## PWA 與部署（M5）
+
+- `sw.js` 由 `vite.config.ts` 在建置時產生，預先快取所有輸出；新增需要離線使用的檔案時，放在 `public/` 或由建置輸出即可。
+- Cloudflare Pages 的快取規則在 `public/_headers`。部署設定與驗收步驟見 README。
+- 開局資料（`src/core/data/openings.json`）是產生的檔案，不要手動編輯。
 
 ## 勝負與和棋（依 FIDE 正式比賽規定，詳見 `docs/architecture.md`）
 
