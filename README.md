@@ -3,6 +3,14 @@
 在瀏覽器裡下西洋棋的網頁遊戲：雙人同機、線上對戰、電腦對手與賽後分析。
 規則與引擎都在瀏覽器裡執行，線上對戰使用 Firebase，不需要自建伺服器；安裝成 PWA 後可以離線遊玩。
 
+![首頁](docs/screenshots/home.jpg)
+
+![對局](docs/screenshots/game.jpg)
+
+![賽後分析](docs/screenshots/analysis.jpg)
+
+![戰術題](docs/screenshots/puzzles.jpg)
+
 ## 功能
 
 - **雙人同機**：一台裝置輪流下。

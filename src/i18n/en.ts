@@ -2,7 +2,7 @@ import type { Messages } from './zh-TW.ts';
 
 export const en: Messages = {
   'app.title': 'Chess',
-  'app.documentTitle': 'Chess · ChessTorusGamets',
+  'app.documentTitle': 'Chess',
   'app.tagline':
     'Play chess in your browser: local two-player, online, against the computer, and review.',
   'app.languageSwitch': '繁體中文',
