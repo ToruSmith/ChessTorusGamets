@@ -3,7 +3,7 @@
 在瀏覽器裡下西洋棋的網頁遊戲：雙人同機、線上對戰、電腦對手與賽後分析。
 規則與引擎都在瀏覽器裡執行，線上對戰使用 Firebase，不需要自建伺服器。
 
-> 目前進度：**M0 專案骨架**。首頁只是佔位，還不能下棋。
+> 目前進度：**M1 規則核心**完成（`src/core`）。畫面還不能下棋，從 M2 開始。
 
 ## 規劃中的功能
 
@@ -60,7 +60,7 @@ npx playwright install chromium
 - 引擎：Stockfish.js lite 單執行緒版，在 Web Worker 中執行。
 - 測試：node:test、Playwright；GitHub Actions 在每次推送與 PR 時執行。
 
-架構與設計見 [docs/architecture.md](docs/architecture.md)，開發規則見 [CLAUDE.md](CLAUDE.md)。
+架構與設計見 [docs/architecture.md](docs/architecture.md)，重要決定與理由見 [docs/decisions.md](docs/decisions.md)，開發規則見 [CLAUDE.md](CLAUDE.md)。
 
 ## 設定 Firebase（M3 之後才需要）
 

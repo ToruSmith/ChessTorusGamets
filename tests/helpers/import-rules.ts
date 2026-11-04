@@ -15,6 +15,9 @@ export const LAYERS = [
 ] as const;
 export type Layer = (typeof LAYERS)[number];
 
+/** The public API of the rules core; other layers import core only from here. */
+export const CORE_ENTRY = 'src/core/index.ts';
+
 const UI_LAYERS: readonly Layer[] = ['board', 'components', 'views', 'app'];
 
 /** Which other src layers each layer may import. Imports within a layer are always allowed. */
@@ -139,6 +142,12 @@ export function findViolations(files: readonly SourceFile[]): Violation[] {
             file: file.path,
             specifier: raw,
             reason: `${layer} may not import ${targetLayer}`,
+          });
+        } else if (targetLayer === 'core' && layer !== 'core' && target !== CORE_ENTRY) {
+          violations.push({
+            file: file.path,
+            specifier: raw,
+            reason: `other layers use the core API through ${CORE_ENTRY}`,
           });
         }
         continue;
