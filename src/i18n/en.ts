@@ -146,7 +146,6 @@ export const en: Messages = {
   'computer.thinking': 'The computer is thinking…',
   'computer.you': '(you)',
   'computer.engine': '(computer, level {n})',
-  'computer.noClock': 'Games against the computer are untimed.',
   'action.hint': 'Hint',
   'action.analyze': 'Analyse game',
   'analysis.opening': 'Opening: {name} ({eco})',

@@ -7,7 +7,14 @@ import { openAnalysis } from '../components/openAnalysis.ts';
 import { useStore } from '../components/useStore.ts';
 import { opposite, type Color, type GameResult } from '../core/index.ts';
 import { useI18n } from '../i18n/I18nProvider.tsx';
-import { ComputerMatch, LEVELS, getEngine, type EngineFactory } from '../state/index.ts';
+import {
+  ComputerMatch,
+  LEVELS,
+  TIME_PRESETS,
+  getEngine,
+  type EngineFactory,
+  type TimePreset,
+} from '../state/index.ts';
 
 const STORAGE_KEY = 'chess.computer.v1';
 
@@ -37,9 +44,10 @@ export function ComputerGameView({ engine }: { engine: EngineFactory }) {
     return (
       <Setup
         onCancel={match ? () => setSettingUp(false) : null}
-        onStart={(humanColor, level) => {
+        onStart={(humanColor, level, timeControl) => {
           match?.dispose();
-          const next = ComputerMatch.create(getEngine(engine), { humanColor, level });
+          const settings = { humanColor, level, timeControl };
+          const next = ComputerMatch.create(getEngine(engine), settings);
           save(next);
           setMatch(next);
           setGameKey((key) => key + 1);
@@ -55,12 +63,14 @@ function Setup({
   onStart,
   onCancel,
 }: {
-  onStart: (humanColor: Color, level: number) => void;
+  onStart: (humanColor: Color, level: number, timeControl: TimePreset['control']) => void;
   onCancel: (() => void) | null;
 }) {
   const { t } = useI18n();
   const [color, setColor] = useState<Color | 'random'>('w');
   const [level, setLevel] = useState(3);
+  const [presetId, setPresetId] = useState<TimePreset['id']>('none');
+  const preset = TIME_PRESETS.find((option) => option.id === presetId);
 
   return (
     <section className="mx-auto flex max-w-md flex-col gap-5" aria-labelledby="computer-setup">
@@ -105,15 +115,36 @@ function Setup({
             </label>
           ))}
         </div>
-        <p className="text-sm text-ivory-muted">
-          {t('computer.levelHint')} {t('computer.noClock')}
-        </p>
+        <p className="text-sm text-ivory-muted">{t('computer.levelHint')}</p>
+      </fieldset>
+      <fieldset className="flex flex-col gap-2">
+        <legend className="mb-2 text-sm text-ivory-muted">{t('setup.timeControl')}</legend>
+        {TIME_PRESETS.map((option) => (
+          <label
+            key={option.id}
+            className="flex cursor-pointer items-center gap-3 rounded-md border border-white/10 bg-felt-raised px-3 py-2"
+          >
+            <input
+              type="radio"
+              name="computer-time"
+              value={option.id}
+              checked={option.id === presetId}
+              onChange={() => setPresetId(option.id)}
+              className="accent-brass"
+            />
+            {t(`time.${option.id}`)}
+          </label>
+        ))}
       </fieldset>
       <div className="flex gap-3">
         <Button
           variant="primary"
           onClick={() =>
-            onStart(color === 'random' ? (Math.random() < 0.5 ? 'w' : 'b') : color, level)
+            onStart(
+              color === 'random' ? (Math.random() < 0.5 ? 'w' : 'b') : color,
+              level,
+              preset?.control ?? null,
+            )
           }
         >
           {t('setup.start')}
@@ -136,6 +167,13 @@ function Game({ match, onNewGame }: { match: ComputerMatch; onNewGame: () => voi
     match.start();
     return unsubscribe;
   }, [match]);
+
+  const clockRunning = snapshot.clock?.running ?? false;
+  useEffect(() => {
+    if (!clockRunning) return;
+    const id = window.setInterval(() => match.tick(), 200);
+    return () => window.clearInterval(id);
+  }, [match, clockRunning]);
 
   const arrows = useMemo(() => (snapshot.hint ? [snapshot.hint] : []), [snapshot.hint]);
   const { result, humanColor } = snapshot;

@@ -1,4 +1,4 @@
-// A game against Stockfish. The moves live in a LocalMatch (untimed), so results come
+// A game against Stockfish. The moves live in a LocalMatch, so clocks and results come
 // from the same replay as every other mode; this class adds the engine's replies.
 import { levelById, type UciEngine } from '../ai/index.ts';
 import {
@@ -8,6 +8,7 @@ import {
   type MoveInput,
   type OpeningBook,
   type Square,
+  type TimeControl,
 } from '../core/index.ts';
 import { LocalMatch, type LocalRecord } from './local-match.ts';
 import type { MatchSnapshot } from './snapshot.ts';
@@ -35,6 +36,8 @@ export interface ComputerOptions {
   /** Lichess opening book for varied openings and as a fallback; null disables it. */
   readonly book?: Promise<OpeningBook> | null;
   readonly random?: () => number;
+  /** Clock source, for tests. */
+  readonly now?: () => number;
 }
 
 /** The computer follows the opening book (when the game started normally) for this many plies. */
@@ -77,13 +80,13 @@ export class ComputerMatch {
 
   static create(
     engine: UciEngine,
-    settings: { humanColor: Color; level: number },
+    settings: { humanColor: Color; level: number; timeControl?: TimeControl | null },
     options: ComputerOptions = {},
   ): ComputerMatch {
     void engine.newGame();
     return new ComputerMatch(
       engine,
-      LocalMatch.create({ timeControl: null }),
+      LocalMatch.create({ timeControl: settings.timeControl ?? null }, options.now),
       settings.humanColor,
       settings.level,
       options,
@@ -100,8 +103,8 @@ export class ComputerMatch {
     if (record.version !== 1 || (record.humanColor !== 'w' && record.humanColor !== 'b'))
       return null;
     if (typeof record.level !== 'number') return null;
-    const local = LocalMatch.fromJSON(record.game);
-    if (!local || local.toJSON().timeControl !== null) return null;
+    const local = LocalMatch.fromJSON(record.game, options.now);
+    if (!local) return null;
     return new ComputerMatch(engine, local, record.humanColor, record.level, options);
   }
 
@@ -141,10 +144,14 @@ export class ComputerMatch {
     return true;
   }
 
+  /** Check the running clock; call it regularly while a timed game is on. */
+  tick(): void {
+    this.#local.tick();
+  }
+
   /** Take back to the human's previous turn (the computer's reply and the human's move). */
   undo(): boolean {
-    const history = this.#local.snapshot.history;
-    if (history.length === 0) return false;
+    if (!this.snapshot.canUndo) return false;
     this.#generation += 1;
     if (this.#thinking) this.#engine.stop();
     this.#thinking = false;
@@ -266,7 +273,7 @@ export class ComputerMatch {
       legalMoves: humanTurn ? base.legalMoves : [],
       drawClaim: humanTurn ? base.drawClaim : null,
       // Undo needs at least one human move to take back.
-      canUndo: base.history.some((move) => move.color === this.#humanColor),
+      canUndo: base.canUndo && base.history.some((move) => move.color === this.#humanColor),
       humanColor: this.#humanColor,
       level: this.#level,
       thinking: this.#thinking,
