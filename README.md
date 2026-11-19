@@ -3,6 +3,8 @@
 在瀏覽器裡下西洋棋的網頁遊戲：雙人同機、線上對戰、電腦對手與賽後分析。
 規則與引擎都在瀏覽器裡執行，線上對戰使用 Firebase，不需要自建伺服器；安裝成 PWA 後可以離線遊玩。
 
+**[立即開始下棋](https://chesstorusgamets.pages.dev/)**　·　[玩家指南](docs/player-guide.md)
+
 ![首頁](docs/screenshots/home.jpg)
 
 ![對局](docs/screenshots/game.jpg)
@@ -83,7 +85,7 @@ npx playwright install chromium
 - 開局資料：Lichess `chess-openings`（CC0）。
 - 測試：node:test、Playwright；GitHub Actions 在每次推送與 PR 時執行。
 
-架構與設計見 [docs/architecture.md](docs/architecture.md)，重要決定與理由見 [docs/decisions.md](docs/decisions.md)，開發規則見 [CLAUDE.md](CLAUDE.md)。
+架構與設計見 [docs/architecture.md](docs/architecture.md)，重要決定與理由見 [docs/decisions.md](docs/decisions.md)，開發規則見 [AGENTS.md](AGENTS.md)，安全設計見 [SECURITY.md](SECURITY.md)。
 
 ## 設定 Firebase（線上對戰）
 
@@ -98,7 +100,8 @@ npx playwright install chromium
    npx firebase-tools deploy --only database --project <你的專案 ID>
    ```
 
-   也可以把 `database.rules.json` 的內容貼到 Console 的「規則」分頁後發布。
+   也可以在 Console 發布：**Realtime Database → 規則**分頁，把編輯器內容全部換成 `database.rules.json` 的完整內容，按「發布」。
+   推送到 GitHub 不會自動更新規則；之後改了規則，都要再發布一次。
 
 5. **專案設定 → 一般 → 你的應用程式**：新增網頁應用程式，把設定值填進環境變數（名稱見 `.env.example`）：
 
@@ -142,9 +145,15 @@ npx playwright install chromium
 
 說明：
 
-- 快取規則在 `public/_headers`；路由都在網址雜湊（`#/online`、`#/r/<房號>`），不需要轉址設定。
+- 快取規則與安全標頭（禁止被其他網站嵌入等）在 `public/_headers`；路由都在網址雜湊（`#/online`、`#/r/<房號>`），不需要轉址設定。
 - 所有路徑都是相對路徑，部署在子目錄或自訂網域也能運作。
 - 不需要 Cloudflare Worker 或其他伺服器。
+
+## 維護
+
+- **每週巡檢**：`.github/workflows/health.yml` 每週一對正式網站跑 `smoke --online`，並檢查會隨網站發佈的套件有沒有安全公告；
+  失敗時 GitHub 會寄信通知。也可以在 Actions 頁面手動執行。
+- **給 AI 工程師**：規則寫在 [AGENTS.md](AGENTS.md)，決定與理由在 [docs/decisions.md](docs/decisions.md)。
 
 ## 授權
 
