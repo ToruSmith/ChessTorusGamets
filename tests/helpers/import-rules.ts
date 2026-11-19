@@ -1,4 +1,4 @@
-// Dependency rules between the layers in src/. Kept as data so CLAUDE.md,
+// Dependency rules between the layers in src/. Kept as data so AGENTS.md,
 // docs/architecture.md and this checker describe the same thing.
 import { posix } from 'node:path';
 

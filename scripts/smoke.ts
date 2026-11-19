@@ -2,6 +2,7 @@
 //   node scripts/smoke.ts <url> [--online] [--no-headers]
 // --online       also connects to Firebase (anonymous sign-in, reads the lobby; writes nothing)
 // --no-headers   skip the Cloudflare _headers checks (for a local `vite preview`)
+// Without --online, a build without Firebase (e.g. a Cloudflare preview) only gets a note, not a failure.
 import { chromium } from '@playwright/test';
 
 const args = process.argv.slice(2);
@@ -45,6 +46,15 @@ if (headers) {
   await check('_headers: sw.js is not cached', async () => {
     const value = (await get('sw.js')).headers.get('cache-control') ?? '';
     expect(value.includes('no-cache'), `cache-control: ${value || '(none)'}`);
+  });
+  await check('_headers: security headers', async () => {
+    const response = await get('./');
+    const csp = response.headers.get('content-security-policy') ?? '';
+    expect(
+      response.headers.get('x-content-type-options') === 'nosniff',
+      'no X-Content-Type-Options',
+    );
+    expect(csp.includes('frame-ancestors'), `content-security-policy: ${csp || '(none)'}`);
   });
   await check('_headers: assets are immutable', async () => {
     const value = (await get(assetPath)).headers.get('cache-control') ?? '';
@@ -108,6 +118,7 @@ await check('Firebase is configured', async () => {
   await page.goto(`${root}#/online`);
   await page.waitForTimeout(500);
   const unconfigured = await page.getByTestId('online-unconfigured').count();
+  if (!online && unconfigured > 0) return 'not configured in this build; skipped';
   expect(unconfigured === 0, 'VITE_FIREBASE_* were not set at build time');
 });
 
