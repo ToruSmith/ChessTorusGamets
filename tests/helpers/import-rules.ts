@@ -57,13 +57,11 @@ export const PACKAGE_RULES: readonly PackageRule[] = [
     allowed: (file) => file.startsWith('src/online/firebase/'),
     reason: 'only src/online/firebase/ may use Firebase; the rest goes through RoomBackend',
   },
-  ...['react', 'react-dom'].map(
-    (name): PackageRule => ({
-      name,
-      allowed: (_file, layer) => UI_LAYERS.includes(layer) || layer === 'i18n',
-      reason: 'core, ai, online and state must not depend on React',
-    }),
-  ),
+  ...['react', 'react-dom'].map((name): PackageRule => ({
+    name,
+    allowed: (_file, layer) => UI_LAYERS.includes(layer) || layer === 'i18n',
+    reason: 'core, ai, online and state must not depend on React',
+  })),
 ];
 
 export interface SourceFile {
