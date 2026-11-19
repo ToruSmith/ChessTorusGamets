@@ -24,7 +24,7 @@
 | 被其他網站嵌入（點擊劫持） | `public/_headers` 的 `frame-ancestors 'self'`                                        |
 
 `tests/online/rules.test.ts` 用 `tests/helpers/rules-db.ts` 載入真的規則檔，每一次寫入與大廳查詢都經過規則求值。
-每週的巡檢（`.github/workflows/health.yml`）會對正式網站匿名登入、讀取大廳，並檢查相依套件的安全公告。
+每月的巡檢（`.github/workflows/health.yml`）會對正式網站匿名登入、讀取大廳，並檢查相依套件的安全公告。
 
 ## 已知限制
 

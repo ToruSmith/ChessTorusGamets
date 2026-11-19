@@ -4,12 +4,12 @@
 
 ## 維護
 
-### D40. 收尾：安全標頭、每週巡檢、文件分工
+### D40. 收尾：安全標頭、每月巡檢、文件分工
 
 - `public/_headers` 加上 `frame-ancestors 'self'`、`base-uri 'self'`、`object-src 'none'` 與 `Permissions-Policy`。
   沒有加 `script-src`／`connect-src`：網站不顯示任何使用者輸入的 HTML，而限制 Firebase 的連線網域只能在正式站驗證，
   寫錯會讓線上對戰壞掉，風險大於好處。
-- `.github/workflows/health.yml` 每週對正式網站跑 `smoke --online`，並用 `npm audit --omit=dev` 檢查會隨網站發佈的套件。
+- `.github/workflows/health.yml` 每月對正式網站跑 `smoke --online`，並用 `npm audit --omit=dev` 檢查會隨網站發佈的套件。
   `firebase` 間接依賴的 `@grpc/grpc-js` 只有 Node 版 Firestore 會用到，不會打包進網站，用 `overrides` 指定修正版消除公告。
   `smoke` 沒有 `--online` 時，沒有設定 Firebase 的建置（例如預覽網址）只記錄不算失敗。
 - 規則從 `CLAUDE.md` 移到 `AGENTS.md`（其他 AI 工具也讀這個檔），`CLAUDE.md` 改為引用。

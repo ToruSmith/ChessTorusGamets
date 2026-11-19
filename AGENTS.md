@@ -41,7 +41,7 @@ Firebase Realtime Database + 匿名登入、Cloudflare Pages。Node 22（`.nvmrc
 | `npm run generate:openings -- <tsv 目錄>` | 由 Lichess `chess-openings` 產生開局資料            |
 
 開 PR 前必須 `npm run check` 與 `npm run test:e2e` 全部通過。CI（`.github/workflows/ci.yml`）在每次推送都會跑；
-`health.yml` 每週檢查正式網站、Firebase 連線與安全公告。
+`health.yml` 每月檢查正式網站、Firebase 連線與安全公告。
 
 ## 分層規則（由 `tests/architecture.test.ts` 強制）
 

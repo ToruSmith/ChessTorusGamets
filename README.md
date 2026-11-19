@@ -151,7 +151,7 @@ npx playwright install chromium
 
 ## 維護
 
-- **每週巡檢**：`.github/workflows/health.yml` 每週一對正式網站跑 `smoke --online`，並檢查會隨網站發佈的套件有沒有安全公告；
+- **每月巡檢**：`.github/workflows/health.yml` 每月 1 日對正式網站跑 `smoke --online`，並檢查會隨網站發佈的套件有沒有安全公告；
   失敗時 GitHub 會寄信通知。也可以在 Actions 頁面手動執行。
 - **給 AI 工程師**：規則寫在 [AGENTS.md](AGENTS.md)，決定與理由在 [docs/decisions.md](docs/decisions.md)。
 
