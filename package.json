@@ -43,6 +43,6 @@
     "vite": "^8.3.5"
   },
   "overrides": {
-    "@grpc/grpc-js": "1.13.7"
+    "@grpc/grpc-js": "^1.14.7"
   }
 }
